@@ -1,0 +1,106 @@
+{
+  "env": {
+    "es2017": true,
+    "node": true,
+    "jest": true
+  },
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "project": "tsconfig.json",
+    "sourceType": "module"
+  },
+  "plugins": [
+    "jest",
+    "@typescript-eslint",
+    "eslint-plugin-tsdoc",
+    "import",
+    "import-newlines"
+  ],
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:@typescript-eslint/recommended-requiring-type-checking",
+    "plugin:import/recommended",
+    "plugin:import/typescript",
+    "plugin:jest/all"
+  ],
+  "rules": {
+    "brace-style": ["error", "1tbs"],
+    "comma-dangle": ["error", "always-multiline"],
+    "quotes": ["error", "single", { "avoidEscape": true }],
+    "import-newlines/enforce": [
+      "error",
+      {
+        "items": 2,
+        "max-len": 100,
+        "semi": false
+      }
+    ],
+    "no-multiple-empty-lines": ["error", {
+      "max": 2,
+      "maxEOF": 0,
+      "maxBOF": 0
+    }],
+    "indent": ["error", 2, { "SwitchCase": 1 }],
+    "object-curly-spacing": ["error", "always"],
+    "object-curly-newline": ["error", {
+      "ObjectExpression": {
+        "minProperties": 4, "multiline": true, "consistent": true
+      },
+      "ObjectPattern": {
+        "minProperties": 4, "multiline": true, "consistent": true
+      },
+      "ImportDeclaration": {
+        "minProperties": 4, "multiline": true, "consistent": true
+      },
+      "ExportDeclaration": {
+        "minProperties": 4, "multiline": true, "consistent": true
+      }
+    }],
+    "curly": [
+      "error",
+      "all"
+    ],
+    "@typescript-eslint/require-await": "off",
+    "@typescript-eslint/no-unsafe-return": "off",
+    "@typescript-eslint/no-unsafe-assignment": "off",
+    "@typescript-eslint/no-unsafe-member-access": "off",
+    "@typescript-eslint/member-delimiter-style": "error",
+    "tsdoc/syntax": "warn",
+    "import/order": [
+      "error",
+      {
+        "groups": [
+          "builtin",
+          "external",
+          "internal"
+        ],
+        "newlines-between": "always",
+        "alphabetize": {
+          "order": "asc",
+          "caseInsensitive": true
+        }
+      }
+    ],
+    "jest/no-hooks": "off",
+    "jest/prefer-expect-assertions": "off",
+    "semi": ["error", "always"],
+    "@typescript-eslint/ban-ts-comment": "off",
+    "jest/no-disabled-tests": "off",
+    "jest/no-conditional-in-test": "off"
+  },
+  "settings": {
+    "import/parsers": {
+      "@typescript-eslint/parser": [
+        ".ts",
+        ".tsx"
+      ]
+    },
+    "import/resolver": {
+      "typescript": {
+        "alwaysTryTypes": true,
+        "project": "tsconfig.json"
+      }
+    }
+  }
+}

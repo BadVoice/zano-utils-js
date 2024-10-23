@@ -1,0 +1,75 @@
+{
+  "name": "zano-utils-js",
+  "version": "0.0.1",
+  "repository": "git@github.com:BadVoice/Zano-utils-js.git",
+  "author": "",
+  "license": "UNLICENSED",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "/dist"
+  ],
+  "scripts": {
+    "prebuild": "rimraf dist",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:cov": "jest --coverage",
+    "test:debug": "node --inspect-brk -r ts-node/register node_modules/.bin/jest --runInBand",
+    "build": "tsc -p ./tsconfig.build.json",
+    "preversion": "yarn test",
+    "version": "yarn build && git add -A dist",
+    "postversion": "git push && git push --tags",
+    "lint": "eslint \"{src,apps,lib,test}/**/*.ts\" --fix"
+  },
+  "dependencies": {
+    "axios": "^0.21.1",
+    "base58": "^2.0.1",
+    "big.js": "^6.1.1",
+    "js-sha3": "^0.9.3",
+    "keccak": "^3.0.3",
+    "rimraf": "^3.0.2",
+    "sodium-native": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/big.js": "^6",
+    "@types/jest": "^26.0.24",
+    "@types/keccak": "^3.0.5",
+    "@types/node": "^14",
+    "@types/sodium-native": "^2.3.5",
+    "@typescript-eslint/eslint-plugin": "^4.28.2",
+    "@typescript-eslint/parser": "^4.28.2",
+    "eslint": "^7.32.0",
+    "eslint-import-resolver-node": "^0.3.4",
+    "eslint-import-resolver-typescript": "^2.4.0",
+    "eslint-plugin-import": "^2.23.4",
+    "eslint-plugin-import-newlines": "^1.1.7",
+    "eslint-plugin-jest": "^24.3.6",
+    "eslint-plugin-tsdoc": "^0.2.14",
+    "jest": "^26.6.3",
+    "ts-jest": "^26.5.6",
+    "ts-node": "^10.1.0",
+    "typescript": "^4.3.5"
+  },
+  "jest": {
+    "moduleFileExtensions": [
+      "js",
+      "json",
+      "ts"
+    ],
+    "rootDir": ".",
+    "testRegex": ".*\\.spec\\.ts$",
+    "transform": {
+      "^.+\\.(t|j)s$": "ts-jest"
+    },
+    "collectCoverageFrom": [
+      "**/*.(t|j)s",
+      "!dist/**",
+      "!coverage/**"
+    ],
+    "coverageDirectory": "./coverage",
+    "testEnvironment": "node"
+  },
+  "publishConfig": {
+    "access": "restricted"
+  }
+}
