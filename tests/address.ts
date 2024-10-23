@@ -63,7 +63,7 @@ function runTests() {
   testEncode(expectedAddress, dataToAddress);
 }
 
-function runTestEncodeAddress(address: string, viewPubKey: string, spendPubKey: string) {
+function runTestEncodeAddress(address: string, viewPubKey: string, spendPubKey: string): void {
   const zanoAddressUtils = new ZanoAddressUtils();
   const addressBufferHex: string = dataToEncodeFn(bufferToHex(base58Decode(address)));
   testEncode(
