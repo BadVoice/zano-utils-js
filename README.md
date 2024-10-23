@@ -1,1 +1,1 @@
-# Zano polling js
+# Zano utils js
