@@ -28,7 +28,6 @@ export class ZanoAddressUtils {
   * @param address Zano address in Base58 format.
   * @returns The object containing the spend and view keys, or throws an error if the address is incorrect.
 */
-  // todo: validate incoming address format
   getKeysFromZarcanumAddress(address: string): ZarcanumAddressKeys {
     try {
       if (!ADDRESS_REGEX.test(address)) {
