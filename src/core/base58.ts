@@ -32,7 +32,7 @@ function bufferToUint64(buffer: Uint8Array) {
   return uint64;
 }
 
-function uint64ToBuffer(buffer: Buffer, uint64: bigint) {
+function uint64ToBuffer(buffer: Buffer, uint64: bigint): void {
   if (!buffer.length || buffer.length > UINT64_SIZE) {
     throw new Error(
       'a uint64 can only be converted to a buffer of size between 1 and ' +
@@ -52,7 +52,7 @@ function uint64ToBuffer(buffer: Buffer, uint64: bigint) {
   }
 }
 
-export function encodeBlock(buffer: Uint8Array) {
+export function encodeBlock(buffer: Uint8Array): string {
   if (!buffer.length || buffer.length > FULL_ENCODED_BLOCK_SIZE) {
     throw new Error(
       'base58 block buffer size must be between 1 and ' +
@@ -73,7 +73,7 @@ export function encodeBlock(buffer: Uint8Array) {
   return string.padStart(stringSize, ALPHABET[0]);
 }
 
-export function decodeBlock(buffer: Buffer, string: string) {
+export function decodeBlock(buffer: Buffer, string: string): void {
   if (!string || string.length > FULL_ENCODED_BLOCK_SIZE) {
     throw new Error(
       'base58 block string size must be between 1 and ' +
@@ -103,12 +103,12 @@ export function decodeBlock(buffer: Buffer, string: string) {
   uint64ToBuffer(buffer, uint64);
 }
 
-export function base58Encode(buffer: Uint8Array) {
+export function base58Encode(buffer: Uint8Array): string {
   let string = '';
 
   for (let start = 0; start < buffer.length;) {
-    const end = start + FULL_DECODED_BLOCK_SIZE;
-    const block = buffer.subarray(start, end);
+    const end: number = start + FULL_DECODED_BLOCK_SIZE;
+    const block: Uint8Array = buffer.subarray(start, end);
     string += encodeBlock(block);
     start = end;
   }
@@ -116,8 +116,8 @@ export function base58Encode(buffer: Uint8Array) {
   return string;
 }
 
-export function base58Decode(string: string) {
-  const bufferSize = Math.floor(string.length / FULL_ENCODED_BLOCK_SIZE) *
+export function base58Decode(string: string): Buffer {
+  const bufferSize: number = Math.floor(string.length / FULL_ENCODED_BLOCK_SIZE) *
     FULL_DECODED_BLOCK_SIZE +
     +DECODED_BLOCK_SIZES[string.length % FULL_ENCODED_BLOCK_SIZE];
 
@@ -129,12 +129,12 @@ export function base58Decode(string: string) {
 
   const buffer = Buffer.alloc(bufferSize);
   for (let startEncoded = 0, startDecoded = 0; startEncoded < string.length;) {
-    const endDecoded = startDecoded + FULL_DECODED_BLOCK_SIZE;
-    const blockDecoded = buffer.subarray(startDecoded, endDecoded);
+    const endDecoded: number = startDecoded + FULL_DECODED_BLOCK_SIZE;
+    const blockDecoded: Buffer = buffer.subarray(startDecoded, endDecoded);
 
-    const endEncoded = startEncoded + FULL_ENCODED_BLOCK_SIZE;
+    const endEncoded: number = startEncoded + FULL_ENCODED_BLOCK_SIZE;
 
-    const blockEncoded = string.slice(startEncoded, endEncoded);
+    const blockEncoded: string = string.slice(startEncoded, endEncoded);
 
     decodeBlock(blockDecoded, blockEncoded);
 

@@ -1,4 +1,5 @@
 import { ZanoAddressUtils } from '../src';
+import { ZarcanumAddressKeys } from '../src/address/types';
 import { base58Decode, base58Encode } from '../src/core/base58';
 
 const rawAddressBufferHex = 'c5 01 9f 5e 1f a9 36 30 d4 b2 81 b1 8b b6 7a 3d b7 9e 96 22 fc 70 3c c3 ad 4a 45 3a 82 e0 a3 6d 51 fa a3 f2 08 c8 f9 ba 49 ba b2 8e ed 62 b3 5b 0f 6b e0 a2 97 bc d8 5c 2f aa 1e b1 82 05 27 bc f7 e3 e2 38 1c d6';
@@ -64,7 +65,7 @@ function runTests() {
 }
 
 function runTestEncodeAddress(address: string, viewPubKey: string, spendPubKey: string): void {
-  const zanoAddressUtils = new ZanoAddressUtils();
+  const zanoAddressUtils: ZanoAddressUtils = new ZanoAddressUtils();
   const addressBufferHex: string = dataToEncodeFn(bufferToHex(base58Decode(address)));
   testEncode(
     'ZxD5aoLDPTdcaRx4uCpyW4XiLfEXejepAVz8cSY2fwHNEiJNu6NmpBBDLGTJzCsUvn3acCVDVDPMV8yQXdPooAp338Se7AxeH',
@@ -90,9 +91,27 @@ function runTestEncodeAddress(address: string, viewPubKey: string, spendPubKey: 
   }
 }
 
-void (async () => {
+function runTestGetZarcanumKeys(address: string, viewPubKey: string, spendPubKey: string): void {
+  const zanoAddressUtils: ZanoAddressUtils = new ZanoAddressUtils();
+  const keysFromAddress: ZarcanumAddressKeys = zanoAddressUtils.getKeysFromZarcanumAddress(address);
+
+  if(keysFromAddress.spendPublicKey !== spendPubKey) {
+    throw new Error('spendPubKey not matched.');
+  }
+
+  if(keysFromAddress.viewPublicKey !== viewPubKey) {
+    throw new Error('viewPubKey not matched.');
+  }
+}
+
+void (async (): Promise<void> => {
   runTests();
   runTestEncodeAddress(
+    'ZxD5aoLDPTdcaRx4uCpyW4XiLfEXejepAVz8cSY2fwHNEiJNu6NmpBBDLGTJzCsUvn3acCVDVDPMV8yQXdPooAp338Se7AxeH',
+    'a3f208c8f9ba49bab28eed62b35b0f6be0a297bcd85c2faa1eb1820527bcf7e3',
+    '9f5e1fa93630d4b281b18bb67a3db79e9622fc703cc3ad4a453a82e0a36d51fa',
+  );
+  runTestGetZarcanumKeys(
     'ZxD5aoLDPTdcaRx4uCpyW4XiLfEXejepAVz8cSY2fwHNEiJNu6NmpBBDLGTJzCsUvn3acCVDVDPMV8yQXdPooAp338Se7AxeH',
     'a3f208c8f9ba49bab28eed62b35b0f6be0a297bcd85c2faa1eb1820527bcf7e3',
     '9f5e1fa93630d4b281b18bb67a3db79e9622fc703cc3ad4a453a82e0a36d51fa',
