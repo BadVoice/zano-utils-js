@@ -1,3 +1,12 @@
+import {
+  ADDRESS_LENGTH,
+  CHECKSUM_LENGTH,
+  FLAG_LENGTH,
+  SPEND_KEY_LENGTH,
+  TAG_LENGTH,
+  VIEW_KEY_LENGTH,
+} from './constants';
+import { ZarcanumAddressKeys } from './types';
 import { base58Encode, base58Decode } from '../core/base58';
 import { getChecksum } from '../core/crypto';
 
@@ -11,31 +20,53 @@ export class ZanoAddressUtils {
     return base58Encode(Buffer.concat([buf, Buffer.from(hash, 'hex')]));
   }
 
-  getKeysFromZarcanumAddress(address: string): { spendPublicKey: string, viewPublicKey: string } | null {
+
+  /*
+  * Retrieves spend and view keys from the Zano address.
+  *
+  * @param address Zano address in Base58 format.
+  * @returns The object containing the spend and view keys, or throws an error if the address is incorrect.
+*/
+  // todo: validate incoming address format
+  getKeysFromZarcanumAddress(address: string): ZarcanumAddressKeys {
     try {
       const buf: Buffer = base58Decode(address);
 
-      // Checking the length of the decoded buffer
-      if (buf.length !== 70) { // 2 (tag + flag) + 32 (spendKey) + 32 (viewKey) + 4 (checksum)
-        console.warn('The length of the zarcanum address buffer is not correct')
-        return null;
+      if (!buf || !Buffer.isBuffer(buf)) {
+        throw new Error('Address decoding error.');
       }
 
-      // Checking the length of the checksum
-      const checksum: string = buf.slice(-4).toString('hex');
-      const data: Buffer = buf.slice(0, -4);
-      if (checksum !== getChecksum(data)) {
-        return null;
+      if (buf.length !== ADDRESS_LENGTH) {
+        throw new Error('Invalid address length.');
       }
 
-      const [tag, flag] = buf;
-      const spendPublicKey: string = buf.slice(2, 34).toString('hex');
-      const viewPublicKey: string = buf.slice(34, 66).toString('hex');
+      const addressWithoutChecksum: Buffer = Buffer.from(buf.buffer,  0, buf.length - CHECKSUM_LENGTH);
+      const checksum: string = Buffer.from(buf.buffer,buf.length - CHECKSUM_LENGTH).toString('hex');
+
+      if (checksum !== getChecksum(addressWithoutChecksum)) {
+        throw new Error('Invalid address checksum.');
+      }
+
+      const spendPublicKey: string = Buffer.from(
+        buf.buffer,
+        TAG_LENGTH + FLAG_LENGTH,
+        SPEND_KEY_LENGTH,
+      ).toString('hex');
+
+      const viewPublicKey: string = Buffer.from(
+        buf.buffer,
+        TAG_LENGTH + FLAG_LENGTH + SPEND_KEY_LENGTH,
+        VIEW_KEY_LENGTH,
+      ).toString('hex');
+
+      if (!spendPublicKey || spendPublicKey.length !== SPEND_KEY_LENGTH * 2 ||
+        !viewPublicKey || viewPublicKey.length !== VIEW_KEY_LENGTH * 2) {
+        throw new Error('Invalid key format in the address.');
+      }
 
       return { spendPublicKey, viewPublicKey };
     } catch (error) {
-      console.error('Error decode address', error.message);
-      return null;
+      throw new Error(error.message);
     }
   }
 }
