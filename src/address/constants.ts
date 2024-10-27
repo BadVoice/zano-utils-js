@@ -9,3 +9,4 @@ export const ADDRESS_LENGTH: number =
   SPEND_KEY_LENGTH +
   VIEW_KEY_LENGTH +
   CHECKSUM_LENGTH;
+export const ADDRESS_REGEX = /^Z[a-zA-Z0-9]{96}$/;
