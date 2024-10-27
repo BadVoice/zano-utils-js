@@ -5,6 +5,7 @@ import {
   SPEND_KEY_LENGTH,
   TAG_LENGTH,
   VIEW_KEY_LENGTH,
+  ADDRESS_REGEX,
 } from './constants';
 import { ZarcanumAddressKeys } from './types';
 import { base58Encode, base58Decode } from '../core/base58';
@@ -30,6 +31,10 @@ export class ZanoAddressUtils {
   // todo: validate incoming address format
   getKeysFromZarcanumAddress(address: string): ZarcanumAddressKeys {
     try {
+      if (!ADDRESS_REGEX.test(address)) {
+        throw new Error('Invalid Address format');
+      }
+
       const buf: Buffer = base58Decode(address);
 
       if (!buf || !Buffer.isBuffer(buf)) {
