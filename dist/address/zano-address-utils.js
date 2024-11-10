@@ -11,9 +11,9 @@ class ZanoAddressUtils {
         const pubSpendKeyBuf = Buffer.from(pubSpendKey, 'hex');
         const derivation = (0, crypto_1.allocateEd25519Point)();
         (0, crypto_1.generateKeyDerivation)(derivation, txPubKeyBuf, secViewKeyBuf);
-        const stealthAddress = (0, crypto_1.allocateEd25519Point)();
-        (0, crypto_1.derivePublicKey)(stealthAddress, derivation, outIndex, pubSpendKeyBuf);
-        return stealthAddress.toString('hex');
+        const c_point_G = (0, crypto_1.allocateEd25519Point)();
+        (0, crypto_1.derivePublicKey)(c_point_G, derivation, outIndex, pubSpendKeyBuf);
+        return c_point_G.toString('hex');
     }
     encodeAddress(tag, flag, spendPublicKey, viewPublicKey) {
         let buf = Buffer.from([tag, flag]);
