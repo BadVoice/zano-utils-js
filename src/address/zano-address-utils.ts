@@ -18,6 +18,7 @@ import {
 
 export class ZanoAddressUtils {
 
+  // h * crypto::c_point_G + crypto::point_t(apa.spend_public_key)
   getStealthAddress(txPubKey: string, secViewKey: string, pubSpendKey: string, outIndex: number): string {
     const txPubKeyBuf: Buffer = Buffer.from(txPubKey, 'hex');
     const secViewKeyBuf: Buffer = Buffer.from(secViewKey, 'hex');
@@ -25,9 +26,9 @@ export class ZanoAddressUtils {
 
     const derivation: Buffer = allocateEd25519Point();
     generateKeyDerivation(derivation, txPubKeyBuf, secViewKeyBuf);
-    const stealthAddress: Buffer = allocateEd25519Point();
-    derivePublicKey(stealthAddress, derivation, outIndex, pubSpendKeyBuf);
-    return stealthAddress.toString('hex');
+    const c_point_G: Buffer = allocateEd25519Point();
+    derivePublicKey(c_point_G, derivation, outIndex, pubSpendKeyBuf);
+    return c_point_G.toString('hex');
   }
 
   encodeAddress(tag: number, flag: number, spendPublicKey: string, viewPublicKey: string): string {
