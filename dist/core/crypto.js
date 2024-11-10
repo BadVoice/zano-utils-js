@@ -26,7 +26,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.allocateEd25519Point = exports.allocateEd25519Scalar = exports.derivePublicKey = exports.generateKeyDerivation = exports.getChecksum = void 0;
+exports.allocateEd25519Point = exports.allocateEd25519Scalar = exports.hs = exports.derivePublicKey = exports.generateKeyDerivation = exports.calculateConcealingPoint = exports.getDerivationToScalar = exports.getChecksum = void 0;
 const sha3 = __importStar(require("js-sha3"));
 const keccak_1 = __importDefault(require("keccak"));
 const sodium_native_1 = __importDefault(require("sodium-native"));
@@ -40,18 +40,56 @@ function getChecksum(buffer) {
     return sha3.keccak_256(buffer).substring(0, ADDRESS_CHECKSUM_SIZE);
 }
 exports.getChecksum = getChecksum;
+function getDerivationToScalar(txPubKey, secViewKey, outIndex) {
+    const txPubKeyBuf = Buffer.from(txPubKey, 'hex');
+    const secViewKeyBuf = Buffer.from(secViewKey, 'hex');
+    const sharedSecret = allocateEd25519Point();
+    generateKeyDerivation(sharedSecret, txPubKeyBuf, secViewKeyBuf);
+    const scalar = allocateEd25519Scalar();
+    derivationToScalar(scalar, sharedSecret, outIndex);
+    return scalar;
+}
+exports.getDerivationToScalar = getDerivationToScalar;
+function calculateConcealingPoint(Hs, pubViewKeyBuff) {
+    const concealingPoint = allocateEd25519Point();
+    sodium_native_1.default.crypto_scalarmult_ed25519_noclamp(concealingPoint, Hs, pubViewKeyBuff);
+    return concealingPoint;
+}
+exports.calculateConcealingPoint = calculateConcealingPoint;
 function generateKeyDerivation(derivation, txPubKey, secKeyView) {
     sodium_native_1.default.crypto_scalarmult_ed25519_noclamp(derivation, secKeyView, txPubKey);
     sodium_native_1.default.crypto_scalarmult_ed25519_noclamp(derivation, EIGHT, derivation);
 }
 exports.generateKeyDerivation = generateKeyDerivation;
-function derivePublicKey(pubKeySpend, derivation, outIndex, outPubKey) {
-    const buffer = pubKeySpend;
-    derivationToScalar(buffer, derivation, outIndex);
-    sodium_native_1.default.crypto_scalarmult_ed25519_base_noclamp(buffer, buffer);
-    sodium_native_1.default.crypto_core_ed25519_add(pubKeySpend, outPubKey, buffer);
+function derivePublicKey(c_point_G, derivation, outIndex, pubSpendKeyBuf) {
+    derivationToScalar(c_point_G, derivation, outIndex);
+    sodium_native_1.default.crypto_scalarmult_ed25519_base_noclamp(c_point_G, c_point_G);
+    sodium_native_1.default.crypto_core_ed25519_add(c_point_G, pubSpendKeyBuf, c_point_G);
 }
 exports.derivePublicKey = derivePublicKey;
+function derivationToScalar(scalar, derivation, outIndex) {
+    const data = Buffer.concat([
+        derivation,
+        (0, serialize_1.serializeVarUint)(outIndex),
+    ]);
+    hashToScalar(scalar, data);
+}
+function fastHash(data) {
+    const hash = (0, keccak_1.default)('keccak256').update(data).digest();
+    return hash;
+}
+function hs(str32, h) {
+    const elements = [str32, h];
+    const hashScalar = allocateEd25519Scalar();
+    const data = Buffer.concat(elements);
+    hashToScalar(hashScalar, data);
+    return hashScalar;
+}
+exports.hs = hs;
+function hashToScalar(scalar, data) {
+    const hash = Buffer.concat([fastHash(data), ZERO]);
+    sodium_native_1.default.crypto_core_ed25519_scalar_reduce(scalar, hash);
+}
 function allocateEd25519Scalar() {
     return Buffer.alloc(EC_SCALAR_SIZE);
 }
@@ -60,19 +98,4 @@ function allocateEd25519Point() {
     return Buffer.alloc(EC_POINT_SIZE);
 }
 exports.allocateEd25519Point = allocateEd25519Point;
-function fastHash(data) {
-    const hash = (0, keccak_1.default)('keccak256').update(data).digest();
-    return hash;
-}
-function hashToScalar(scalar, data) {
-    const hash = Buffer.concat([fastHash(data), ZERO]);
-    sodium_native_1.default.crypto_core_ed25519_scalar_reduce(scalar, hash);
-}
-function derivationToScalar(scalar, derivation, outIndex) {
-    const data = Buffer.concat([
-        derivation,
-        (0, serialize_1.serializeVarUint)(outIndex),
-    ]);
-    hashToScalar(scalar, data);
-}
 //# sourceMappingURL=crypto.js.map
