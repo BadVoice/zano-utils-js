@@ -32,12 +32,32 @@ export class ZanoAddressUtils {
   }
 
   encodeAddress(tag: number, flag: number, spendPublicKey: string, viewPublicKey: string): string {
-    let buf: Buffer = Buffer.from([tag, flag]);
-    const spendKey: Buffer = Buffer.from(spendPublicKey, 'hex');
-    const viewKey: Buffer = Buffer.from(viewPublicKey, 'hex');
-    buf = Buffer.concat([buf, spendKey, viewKey]);
-    const hash: string = getChecksum(buf);
-    return base58Encode(Buffer.concat([buf, Buffer.from(hash, 'hex')]));
+    try {
+      if (tag < 0) {
+        throw new Error('Invalid tag');
+      }
+      if (flag < 0) {
+        throw new Error('Invalid flag');
+      }
+      let buf: Buffer = Buffer.from([tag, flag]);
+
+      if (spendPublicKey.length !== 64 && !/^([0-9a-fA-F]{2})+$/.test(spendPublicKey)) {
+        throw new Error('Invalid spendPublicKey: must be a hexadecimal string');
+      }
+      const spendKey: Buffer = Buffer.from(spendPublicKey, 'hex');
+
+      if (viewPublicKey.length !== 64 && !/^([0-9a-fA-F]{2})+$/.test(viewPublicKey)) {
+        throw new Error('Invalid viewPrivateKey: must be a hexadecimal string');
+      }
+      const viewKey: Buffer = Buffer.from(viewPublicKey, 'hex');
+
+      buf = Buffer.concat([buf, spendKey, viewKey]);
+      const hash: string = getChecksum(buf);
+
+      return base58Encode(Buffer.concat([buf, Buffer.from(hash, 'hex')]));
+    } catch (error) {
+      throw new Error(error.message);
+    }
   }
 
   /*
