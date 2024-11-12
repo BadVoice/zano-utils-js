@@ -1,5 +1,5 @@
 import {
-  ADDRESS_LENGTH,
+  BUFFER_ADDRESS_LENGTH,
   CHECKSUM_LENGTH,
   FLAG_LENGTH,
   SPEND_KEY_LENGTH,
@@ -42,12 +42,12 @@ export class ZanoAddressUtils {
       let buf: Buffer = Buffer.from([tag, flag]);
 
       if (spendPublicKey.length !== 64 && !/^([0-9a-fA-F]{2})+$/.test(spendPublicKey)) {
-        throw new Error('Invalid spendPublicKey: must be a hexadecimal string');
+        throw new Error('Invalid spendPublicKey: must be a hexadecimal string with a length of 64');
       }
       const spendKey: Buffer = Buffer.from(spendPublicKey, 'hex');
 
       if (viewPublicKey.length !== 64 && !/^([0-9a-fA-F]{2})+$/.test(viewPublicKey)) {
-        throw new Error('Invalid viewPrivateKey: must be a hexadecimal string');
+        throw new Error('Invalid viewPrivateKey: must be a hexadecimal string with a length of 64');
       }
       const viewKey: Buffer = Buffer.from(viewPublicKey, 'hex');
 
@@ -74,12 +74,8 @@ export class ZanoAddressUtils {
 
       const buf: Buffer = base58Decode(address);
 
-      if (!buf || !Buffer.isBuffer(buf)) {
-        throw new Error('Address decoding error.');
-      }
-
-      if (buf.length !== ADDRESS_LENGTH) {
-        throw new Error('Invalid address length.');
+      if (buf.length !== BUFFER_ADDRESS_LENGTH) {
+        throw new Error('Invalid buffer address length');
       }
 
       const addressWithoutChecksum: Buffer = Buffer.from(buf.buffer,  0, buf.length - CHECKSUM_LENGTH);

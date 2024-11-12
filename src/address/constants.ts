@@ -3,7 +3,7 @@ export const FLAG_LENGTH = 1;
 export const SPEND_KEY_LENGTH = 32;
 export const VIEW_KEY_LENGTH = 32;
 export const CHECKSUM_LENGTH = 4;
-export const ADDRESS_LENGTH: number =
+export const BUFFER_ADDRESS_LENGTH: number =
   TAG_LENGTH +
   FLAG_LENGTH +
   SPEND_KEY_LENGTH +
