@@ -68,7 +68,7 @@ describe(
     it('should throw an invalid character in base58 string', () => {
       const invalidAddress = 'ZxD5aoLDPTdcaRx4uOpyW4XiLfEXejepAVz8cSY2fwHNEiJNu6NmpBBDLGTJzCsUvn3acCVDVDPMV8yQXdPooAp338Se7AxeH';
       expect(() => {
-        base58Decode(invalidAddress);
+        zanoAddressUtils.getKeysFromZarcanumAddress(invalidAddress);
       }).toThrow('base58 string block contains invalid character');
     });
 
