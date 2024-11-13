@@ -1,5 +1,5 @@
 import {
-  ADDRESS_LENGTH,
+  BUFFER_ADDRESS_LENGTH,
   CHECKSUM_LENGTH,
   FLAG_LENGTH,
   SPEND_KEY_LENGTH,
@@ -32,12 +32,32 @@ export class ZanoAddressUtils {
   }
 
   encodeAddress(tag: number, flag: number, spendPublicKey: string, viewPublicKey: string): string {
-    let buf: Buffer = Buffer.from([tag, flag]);
-    const spendKey: Buffer = Buffer.from(spendPublicKey, 'hex');
-    const viewKey: Buffer = Buffer.from(viewPublicKey, 'hex');
-    buf = Buffer.concat([buf, spendKey, viewKey]);
-    const hash: string = getChecksum(buf);
-    return base58Encode(Buffer.concat([buf, Buffer.from(hash, 'hex')]));
+    try {
+      if (tag < 0) {
+        throw new Error('Invalid tag');
+      }
+      if (flag < 0) {
+        throw new Error('Invalid flag');
+      }
+      let buf: Buffer = Buffer.from([tag, flag]);
+
+      if (spendPublicKey.length !== 64 && !/^([0-9a-fA-F]{2})+$/.test(spendPublicKey)) {
+        throw new Error('Invalid spendPublicKey: must be a hexadecimal string with a length of 64');
+      }
+      const spendKey: Buffer = Buffer.from(spendPublicKey, 'hex');
+
+      if (viewPublicKey.length !== 64 && !/^([0-9a-fA-F]{2})+$/.test(viewPublicKey)) {
+        throw new Error('Invalid viewPrivateKey: must be a hexadecimal string with a length of 64');
+      }
+      const viewKey: Buffer = Buffer.from(viewPublicKey, 'hex');
+
+      buf = Buffer.concat([buf, spendKey, viewKey]);
+      const hash: string = getChecksum(buf);
+
+      return base58Encode(Buffer.concat([buf, Buffer.from(hash, 'hex')]));
+    } catch (error) {
+      throw new Error(error.message);
+    }
   }
 
   /*
@@ -54,19 +74,15 @@ export class ZanoAddressUtils {
 
       const buf: Buffer = base58Decode(address);
 
-      if (!buf || !Buffer.isBuffer(buf)) {
-        throw new Error('Address decoding error.');
-      }
-
-      if (buf.length !== ADDRESS_LENGTH) {
-        throw new Error('Invalid address length.');
+      if (buf.length !== BUFFER_ADDRESS_LENGTH) {
+        throw new Error('Invalid buffer address length');
       }
 
       const addressWithoutChecksum: Buffer = Buffer.from(buf.buffer,  0, buf.length - CHECKSUM_LENGTH);
       const checksum: string = Buffer.from(buf.buffer,buf.length - CHECKSUM_LENGTH).toString('hex');
 
       if (checksum !== getChecksum(addressWithoutChecksum)) {
-        throw new Error('Invalid address checksum.');
+        throw new Error('Invalid address checksum');
       }
 
       const spendPublicKey: string = Buffer.from(
