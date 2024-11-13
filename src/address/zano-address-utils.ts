@@ -82,7 +82,7 @@ export class ZanoAddressUtils {
       const checksum: string = Buffer.from(buf.buffer,buf.length - CHECKSUM_LENGTH).toString('hex');
 
       if (checksum !== getChecksum(addressWithoutChecksum)) {
-        throw new Error('Invalid address checksum.');
+        throw new Error('Invalid address checksum');
       }
 
       const spendPublicKey: string = Buffer.from(

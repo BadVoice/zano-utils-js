@@ -79,4 +79,9 @@ describe(
       }).toThrow('base58 string has an invalid size');
     });
 
+    it('should throw an invalid address checksum', () => {
+      expect(() => {
+        (zanoAddressUtils.getKeysFromZarcanumAddress('Zx' + '1'.repeat(95)));
+      }).toThrow('Invalid address checksum');
+    });
   });
