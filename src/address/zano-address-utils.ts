@@ -1,3 +1,5 @@
+import * as crypto from 'crypto';
+
 import {
   BUFFER_ADDRESS_LENGTH,
   CHECKSUM_LENGTH,
@@ -6,6 +8,8 @@ import {
   TAG_LENGTH,
   VIEW_KEY_LENGTH,
   ADDRESS_REGEX,
+  BYTES_FOR_PAYMENT_ID,
+  CURRENCY_PUBLIC_INTEG_ADDRESS_V2_BASE58_PREFIX,
 } from './constants';
 import { ZarcanumAddressKeys } from './types';
 import { base58Encode, base58Decode } from '../core/base58';
@@ -45,15 +49,12 @@ export class ZanoAddressUtils {
         throw new Error('Invalid spendPublicKey: must be a hexadecimal string with a length of 64');
       }
       const spendKey: Buffer = Buffer.from(spendPublicKey, 'hex');
-
       if (viewPublicKey.length !== 64 && !/^([0-9a-fA-F]{2})+$/.test(viewPublicKey)) {
         throw new Error('Invalid viewPrivateKey: must be a hexadecimal string with a length of 64');
       }
       const viewKey: Buffer = Buffer.from(viewPublicKey, 'hex');
-
       buf = Buffer.concat([buf, spendKey, viewKey]);
       const hash: string = getChecksum(buf);
-
       return base58Encode(Buffer.concat([buf, Buffer.from(hash, 'hex')]));
     } catch (error) {
       throw new Error(error.message);
@@ -101,10 +102,48 @@ export class ZanoAddressUtils {
         !viewPublicKey || viewPublicKey.length !== VIEW_KEY_LENGTH * 2) {
         throw new Error('Invalid key format in the address.');
       }
-
       return { spendPublicKey, viewPublicKey };
     } catch (error) {
       throw new Error(error.message);
     }
   }
+
+  generatePaymentId(): string {
+    return crypto.randomBytes(BYTES_FOR_PAYMENT_ID).toString('hex');
+  }
+
+  getIntegratedAddress(tag: number, flag: number, spendPublicKey: string, viewPublicKey: string): string {
+    try {
+      const paymentId: Buffer = Buffer.from(this.generatePaymentId(), 'hex');
+      if (tag < 0) {
+        throw new Error('Invalid tag');
+      }
+      if (flag < 0) {
+        throw new Error('Invalid flag');
+      }
+      let buf: Buffer = Buffer.from([tag, flag]);
+
+      if (spendPublicKey.length !== 64 && !/^([0-9a-fA-F]{2})+$/.test(spendPublicKey)) {
+        throw new Error('Invalid spendPublicKey: must be a hexadecimal string with a length of 64');
+      }
+      const spendKey: Buffer = Buffer.from(spendPublicKey, 'hex');
+
+      if (viewPublicKey.length !== 64 && !/^([0-9a-fA-F]{2})+$/.test(viewPublicKey)) {
+        throw new Error('Invalid viewPrivateKey: must be a hexadecimal string with a length of 64');
+      }
+      const viewKey: Buffer = Buffer.from(viewPublicKey, 'hex');
+
+      buf = Buffer.concat([buf, spendKey, viewKey, paymentId]);
+      const hash: string = getChecksum(buf);
+
+      return base58Encode(Buffer.concat([buf, Buffer.from(hash, 'hex')]));
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  }
+
+  getKeysFromIntegratedAddress(integratedAddress: string): ZarcanumAddressKeys {
+    return;
+  }
+
 }

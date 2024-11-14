@@ -85,3 +85,46 @@ describe(
       }).toThrow('Invalid address checksum');
     });
   });
+
+describe(
+  'testing the correctness of the integrated address encoding function getIntegratedAddress',
+  () => {
+    const tag = 0x36f8;
+    const flag = 1;
+    const spendPublicKey = '9f5e1fa93630d4b281b18bb67a3db79e9622fc703cc3ad4a453a82e0a36d51fa';
+    const viewPublicKey = 'a3f208c8f9ba49bab28eed62b35b0f6be0a297bcd85c2faa1eb1820527bcf7e3';
+    const zanoAddressUtils = new ZanoAddressUtils();
+    const integratedAddress = zanoAddressUtils.getIntegratedAddress(tag, flag, spendPublicKey, viewPublicKey);
+
+    it('checking the correctness of the result', () => {
+      expect(integratedAddress).toBe('iZ2kFmwxRHoaRxm1ni8HnfUTkYuKbni8s4CE2Z4GgFfH99BJ6cnbAtJTgUnZjPj9CTCTKy1qqM9wPCTp92uBC7e47JPwAi2q4Vm1WVcdj1DD');
+    });
+
+    it('checking the correctness of the address length', () => {
+      expect(integratedAddress).toHaveLength(108);
+    });
+
+    it('should throw an error for invalid tag', () => {
+      expect(() => {
+        zanoAddressUtils.getIntegratedAddress(-197, 1, '...', '...');
+      }).toThrow('Invalid tag');
+    });
+
+    it('should throw an error for invalid flag', () => {
+      expect(() => {
+        zanoAddressUtils.getIntegratedAddress(197, -1, '...', '...');
+      }).toThrow('Invalid flag');
+    });
+
+    it('should throw an error for invalid public key', () => {
+      expect(() => {
+        zanoAddressUtils.getIntegratedAddress(197, 1, 'invalid', viewPublicKey);
+      }).toThrow('Invalid spendPublicKey: must be a hexadecimal string with a length of 64');
+    });
+
+    it('should throw an error for invalid private key', () => {
+      expect(() => {
+        zanoAddressUtils.getIntegratedAddress(197, 1, spendPublicKey, 'invalid');
+      }).toThrow('Invalid viewPrivateKey: must be a hexadecimal string with a length of 64');
+    });
+  });
