@@ -24,8 +24,8 @@ export class ZanoTransactionUtils {
   }
 
   // Q = 1/8 * Hs(domain_sep, Hs(8 * r * V, i) ) * 8 * V
-  getConcealingPoint(view_secret_key: string, tx_pub_key: string, output_index: number, pubViewKey: string): string {
-    const scalarH: Buffer = getDerivationToScalar(tx_pub_key, view_secret_key, output_index); // h = Hs(8 * r * V, i)
+  getConcealingPoint(viewSecretKey: string, txPubKey: string, outputIndex: number, pubViewKey: string): string {
+    const scalarH: Buffer = getDerivationToScalar(txPubKey, viewSecretKey, outputIndex); // h = Hs(8 * r * V, i)
     const Hs: Buffer = hs(CRYPTO_HDS_OUT_CONCEALING_POINT, scalarH); // Hs(domain_sep, Hs(8 * r * V, i) )
 
     // point V equal pubViewKey
