@@ -171,4 +171,3 @@ describe(
       }).toThrow('Invalid address checksum');
     });
   });
-
