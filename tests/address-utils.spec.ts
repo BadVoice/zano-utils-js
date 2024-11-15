@@ -128,3 +128,46 @@ describe(
       }).toThrow('Invalid viewPrivateKey: must be a hexadecimal string with a length of 64');
     });
   });
+
+describe(
+  'testing the correctness of the address decoding function getKeysFromIntegratedAddress',
+  () => {
+    const zanoAddressUtils = new ZanoAddressUtils();
+    const integratedAddress = 'iZ2kFmwxRHoaRxm1ni8HnfUTkYuKbni8s4CE2Z4GgFfH99BJ6cnbAtJTgUnZjPj9CTCTKy1qqM9wPCTp92uBC7e47JPwAi2q4Vm1WVcdj1DD';
+    const spendPublicKey = 'b48bcc1896a6c7ddfb1daa575160a42e0f17a18cfc741317c545e8486b0c30ab';
+    const viewPublicKey = 'fb8a1f99c7a39f83693b9d8e1b68447a7d65c35f8f9244874ec0462a375525aa';
+
+    it('checking the correctness of the integrated address format (ADDRESS_REGEX)', () => {
+      expect((zanoAddressUtils.getKeysFromIntegratedAddress(integratedAddress))).toStrictEqual({
+        spendPublicKey,
+        viewPublicKey,
+      });
+    });
+
+    it('should throw an error for invalid integrated address format', () => {
+      const invalidIntegratedAddress = 'iUyPHy6NQ71caRx4uCpyW4XiLfEXejepAVz8cSY2fwHNEiJNu6NmpBBDLGTJzCsUvn3acCVDVDPMV8yQXdPooAp3iTptcfXRFDy2v9ND5w6Y';
+      expect(() => {
+        zanoAddressUtils.getKeysFromIntegratedAddress(invalidIntegratedAddress);
+      }).toThrow('Invalid integrated address format');
+    });
+
+    it('should throw an invalid character in base58 string', () => {
+      const invalidIntegratedAddress = 'iZyPHy6NQ71caRx4uOpyW4XiLfEXejepAVz8cSY2fwHNEiJNu6NmpBBDLGTJzCsUvn3acCVDVDPMV8yQXdPooAp3iTptcfXRFDy2v9ND5w6Y';
+      expect(() => {
+        zanoAddressUtils.getKeysFromIntegratedAddress(invalidIntegratedAddress);
+      }).toThrow('base58 string block contains invalid character');
+    });
+
+    it('should throw an invalid base58 string size', () => {
+      const invalidIntegratedAddress = 'Z';
+      expect(() => {
+        base58Decode(invalidIntegratedAddress);
+      }).toThrow('base58 string has an invalid size');
+    });
+
+    it('should throw an invalid integrated address checksum', () => {
+      expect(() => {
+        (zanoAddressUtils.getKeysFromIntegratedAddress('iZx' + '1'.repeat(105)));
+      }).toThrow('Invalid address checksum');
+    });
+  });

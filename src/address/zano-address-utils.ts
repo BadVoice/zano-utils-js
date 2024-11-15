@@ -10,6 +10,8 @@ import {
   ADDRESS_REGEX,
   BYTES_FOR_PAYMENT_ID,
   CURRENCY_PUBLIC_INTEG_ADDRESS_V2_BASE58_PREFIX,
+  BUFFER_INTEG_ADDRESS_LENGTH,
+  INTEGRATED_ADDRESS_REGEX,
 } from './constants';
 import { ZarcanumAddressKeys } from './types';
 import { base58Encode, base58Decode } from '../core/base58';
@@ -132,7 +134,6 @@ export class ZanoAddressUtils {
         throw new Error('Invalid viewPrivateKey: must be a hexadecimal string with a length of 64');
       }
       const viewKey: Buffer = Buffer.from(viewPublicKey, 'hex');
-
       buf = Buffer.concat([buf, spendKey, viewKey, paymentId]);
       const hash: string = getChecksum(buf);
 
@@ -143,7 +144,42 @@ export class ZanoAddressUtils {
   }
 
   getKeysFromIntegratedAddress(integratedAddress: string): ZarcanumAddressKeys {
-    return;
-  }
+    try {
+      if (!INTEGRATED_ADDRESS_REGEX.test(integratedAddress)) {
+        throw new Error('Invalid integrated address format');
+      }
 
+      const buf: Buffer = base58Decode(integratedAddress);
+      if (buf.length !== BUFFER_INTEG_ADDRESS_LENGTH) {
+        throw new Error('Invalid buffer integrated address length');
+      }
+
+      const addressWithoutChecksum: Buffer = Buffer.from(buf.buffer,  0, buf.length - CHECKSUM_LENGTH);
+      const checksum: string = Buffer.from(buf.buffer,buf.length - CHECKSUM_LENGTH).toString('hex');
+
+      if (checksum !== getChecksum(addressWithoutChecksum)) {
+        throw new Error('Invalid address checksum');
+      }
+
+      const spendPublicKey: string = Buffer.from(
+        buf.buffer,
+        TAG_LENGTH + FLAG_LENGTH,
+        SPEND_KEY_LENGTH,
+      ).toString('hex');
+
+      const viewPublicKey: string = Buffer.from(
+        buf.buffer,
+        TAG_LENGTH + FLAG_LENGTH + SPEND_KEY_LENGTH,
+        VIEW_KEY_LENGTH,
+      ).toString('hex');
+
+      if (!spendPublicKey || spendPublicKey.length !== SPEND_KEY_LENGTH * 2 ||
+        !viewPublicKey || viewPublicKey.length !== VIEW_KEY_LENGTH * 2) {
+        throw new Error('Invalid key format in the address.');
+      }
+      return { spendPublicKey, viewPublicKey };
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  }
 }
