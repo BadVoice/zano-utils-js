@@ -100,7 +100,7 @@ describe(
       expect(integratedAddress).toBe('iZ2kFmwxRHoaRxm1ni8HnfUTkYuKbni8s4CE2Z4GgFfH99BJ6cnbAtJTgUnZjPj9CTCTKy1qqM9wPCTp92uBC7e47JPwAi2q4Vm1WVcdj1DD');
     });
 
-    it('checking the correctness of the integrated address length', () => {
+    it('checking the correctness of the address length', () => {
       expect(integratedAddress).toHaveLength(108);
     });
 
