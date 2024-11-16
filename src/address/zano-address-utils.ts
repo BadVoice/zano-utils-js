@@ -9,27 +9,9 @@ import {
 } from './constants';
 import { ZarcanumAddressKeys } from './types';
 import { base58Encode, base58Decode } from '../core/base58';
-import {
-  derivePublicKey,
-  generateKeyDerivation,
-  allocateEd25519Point,
-  getChecksum,
-} from '../core/crypto';
+import { getChecksum } from '../core/crypto';
 
 export class ZanoAddressUtils {
-
-  // h * crypto::c_point_G + crypto::point_t(apa.spend_public_key)
-  getStealthAddress(txPubKey: string, secViewKey: string, pubSpendKey: string, outIndex: number): string {
-    const txPubKeyBuf: Buffer = Buffer.from(txPubKey, 'hex');
-    const secViewKeyBuf: Buffer = Buffer.from(secViewKey, 'hex');
-    const pubSpendKeyBuf: Buffer = Buffer.from(pubSpendKey, 'hex');
-
-    const derivation: Buffer = allocateEd25519Point();
-    generateKeyDerivation(derivation, txPubKeyBuf, secViewKeyBuf);
-    const c_point_G: Buffer = allocateEd25519Point();
-    derivePublicKey(c_point_G, derivation, outIndex, pubSpendKeyBuf);
-    return c_point_G.toString('hex');
-  }
 
   encodeAddress(tag: number, flag: number, spendPublicKey: string, viewPublicKey: string): string {
     try {
