@@ -10,7 +10,6 @@ This repository contains TypeScript code that performs various cryptographic cal
 - Address encoding and decoding
 - Calculating stealth addresses
 - Calculating integrated addresses
-- Calculating stealth addresses
 - Calculating concealing point
 - Decrypting encrypted amounts using sender Pedersen commitments
 - Asset decoding
