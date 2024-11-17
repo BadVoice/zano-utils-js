@@ -90,18 +90,18 @@ describe(
   'testing the correctness of the integrated address encoding function getIntegratedAddress',
   () => {
     const tag = 0x36f8;
-    const flag = 1;
+    const flag = 120;
     const spendPublicKey = '9f5e1fa93630d4b281b18bb67a3db79e9622fc703cc3ad4a453a82e0a36d51fa';
     const viewPublicKey = 'a3f208c8f9ba49bab28eed62b35b0f6be0a297bcd85c2faa1eb1820527bcf7e3';
     const zanoAddressUtils = new ZanoAddressUtils();
     const integratedAddress = zanoAddressUtils.getIntegratedAddress(tag, flag, spendPublicKey, viewPublicKey);
 
     it('checking the correctness of the result', () => {
-      expect(integratedAddress).toBe('iZ2kFmwxRHoaRxm1ni8HnfUTkYuKbni8s4CE2Z4GgFfH99BJ6cnbAtJTgUnZjPj9CTCTKy1qqM9wPCTp92uBC7e47JPwAi2q4Vm1WVcdj1DD');
+      expect(integratedAddress).toBe('iZ4mBxubNfqcaRx4uCpyW4XiLfEXejepAVz8cSY2fwHNEiJNu6NmpBBDLGTJzCsUvn3acCVDVDPMV8yQXdPooAp3iTrG7nU5rRCWmcozLaMoY95sAbo6');
     });
 
     it('checking the correctness of the integrated address length', () => {
-      expect(integratedAddress).toHaveLength(108);
+      expect(integratedAddress).toHaveLength(116);
     });
 
     it('should throw an error for invalid tag', () => {

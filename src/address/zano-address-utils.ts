@@ -109,33 +109,48 @@ export class ZanoAddressUtils {
     }
   }
 
-  generatePaymentId(): string {
+  private generatePaymentId(): string {
     return crypto.randomBytes(BYTES_FOR_PAYMENT_ID).toString('hex');
   }
 
   getIntegratedAddress(tag: number, flag: number, spendPublicKey: string, viewPublicKey: string): string {
     try {
-      const paymentId: Buffer = Buffer.from(this.generatePaymentId(), 'hex');
+      const paymentId: Buffer = Buffer.from(this.generatePaymentId(), 'hex'); //13
+      const paymentIdC: Buffer = Buffer.from('3ba0527bcfb1fa93630d28eed6', 'hex'); //13
+      // console.log('paymentIdC:', paymentIdC.length);
+      // console.log('paymentId:', paymentId.length);
       if (tag < 0) {
         throw new Error('Invalid tag');
       }
       if (flag < 0) {
         throw new Error('Invalid flag');
       }
-      let buf: Buffer = Buffer.from([tag, flag]);
-
+      let buf: Buffer = Buffer.from([tag, flag]); //2
+      // console.log('buf1:', buf.length);
       if (spendPublicKey.length !== 64 && !/^([0-9a-fA-F]{2})+$/.test(spendPublicKey)) {
         throw new Error('Invalid spendPublicKey: must be a hexadecimal string with a length of 64');
       }
-      const spendKey: Buffer = Buffer.from(spendPublicKey, 'hex');
-
+      const spendKey: Buffer = Buffer.from(spendPublicKey, 'hex'); //32
+      // console.log('spendKey:', spendKey.length);
       if (viewPublicKey.length !== 64 && !/^([0-9a-fA-F]{2})+$/.test(viewPublicKey)) {
         throw new Error('Invalid viewPrivateKey: must be a hexadecimal string with a length of 64');
       }
-      const viewKey: Buffer = Buffer.from(viewPublicKey, 'hex');
-      buf = Buffer.concat([buf, spendKey, viewKey, paymentId]);
-      const hash: string = getChecksum(buf);
+      const viewKey: Buffer = Buffer.from(viewPublicKey, 'hex'); //32
+      // console.log('viewKey:', viewKey.length);
 
+      // console.log('Without id:', Buffer.concat([buf, spendKey, viewKey]).length);
+      // console.log('With id:', Buffer.concat([buf, spendKey, viewKey, paymentId]).length);
+      // console.log('With id from C++:', Buffer.concat([buf, spendKey, viewKey, paymentIdC]).length);
+
+      buf = Buffer.concat([buf, spendKey, viewKey, paymentId]); //79
+      const hash: string = getChecksum(buf); //8
+      // console.log('hash:', hash);
+      // console.log('buf2:', buf.length);
+      // console.log('hash:', Buffer.from(hash, 'hex').length); //4
+      // console.log('before base58Encode:', Buffer.concat([buf, Buffer.from(hash, 'hex')]).length); //83
+      // console.log('base58Encode:', base58Encode(Buffer.concat([buf, Buffer.from(hash, 'hex')])).length); //115
+      console.log('base58Encode hash:', base58Encode(Buffer.from(hash, 'hex')));
+      console.log('base58Encode buf:', base58Encode(buf));
       return base58Encode(Buffer.concat([buf, Buffer.from(hash, 'hex')]));
     } catch (error) {
       throw new Error(error.message);
