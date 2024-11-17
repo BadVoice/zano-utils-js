@@ -8,7 +8,7 @@ import {
   TAG_LENGTH,
   VIEW_KEY_LENGTH,
   ADDRESS_REGEX,
-  BYTES_FOR_PAYMENT_ID,
+  PAYMENT_ID_LENGTH,
   BUFFER_INTEG_ADDRESS_LENGTH,
   INTEGRATED_ADDRESS_REGEX,
 } from './constants';
@@ -110,9 +110,9 @@ export class ZanoAddressUtils {
   }
 
   private generatePaymentId(): string {
-    return crypto.randomBytes(BYTES_FOR_PAYMENT_ID).toString('hex');
+    return crypto.randomBytes(PAYMENT_ID_LENGTH).toString('hex');
   }
-
+  //getIntegratedAddress(addres: string): string {}
   getIntegratedAddress(tag: number, flag: number, spendPublicKey: string, viewPublicKey: string): string {
     try {
       // const paymentId: Buffer = Buffer.from(this.generatePaymentId(), 'hex');
@@ -152,7 +152,7 @@ export class ZanoAddressUtils {
         throw new Error('Invalid buffer integrated address length');
       }
 
-      const addressWithoutChecksum: Buffer = Buffer.from(buf.buffer,  0, buf.length - CHECKSUM_LENGTH);
+      const addressWithoutChecksum: Buffer = Buffer.from(buf.buffer, 0, buf.length - CHECKSUM_LENGTH);
       const checksum: string = Buffer.from(buf.buffer,buf.length - CHECKSUM_LENGTH).toString('hex');
 
       if (checksum !== getChecksum(addressWithoutChecksum)) {
