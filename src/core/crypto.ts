@@ -14,13 +14,13 @@ export function getChecksum(buffer: Buffer): string {
   return sha3.keccak_256(buffer).substring(0, ADDRESS_CHECKSUM_SIZE);
 }
 
-// Hs(8 * r * V, i)
+// h = Hs(8 * r * V, i)
 export function getDerivationToScalar(txPubKey: string, secViewKey: string, outIndex: number): Buffer {
-  const txPubKeyBuf: Buffer = Buffer.from(txPubKey, 'hex');
-  const secViewKeyBuf: Buffer = Buffer.from(secViewKey, 'hex');
+  const txPubKeyBuff: Buffer = Buffer.from(txPubKey, 'hex');
+  const secViewKeyBuff: Buffer = Buffer.from(secViewKey, 'hex');
 
   const sharedSecret: Buffer = allocateEd25519Point();
-  generateKeyDerivation(sharedSecret, txPubKeyBuf, secViewKeyBuf);
+  generateKeyDerivation(sharedSecret, txPubKeyBuff, secViewKeyBuff);
 
   const scalar: Buffer = allocateEd25519Scalar();
   derivationToScalar(scalar, sharedSecret, outIndex);
@@ -29,7 +29,7 @@ export function getDerivationToScalar(txPubKey: string, secViewKey: string, outI
 }
 
 export function calculateConcealingPoint(Hs: Buffer, pubViewKeyBuff: Buffer): Buffer {
-  const concealingPoint = allocateEd25519Point();
+  const concealingPoint: Buffer = allocateEd25519Point();
   sodium.crypto_scalarmult_ed25519_noclamp(concealingPoint, Hs,  pubViewKeyBuff);
   return concealingPoint;
 }
@@ -41,14 +41,14 @@ export function generateKeyDerivation(derivation: Buffer, txPubKey: Buffer, secK
 
 // h * crypto::c_point_G + crypto::point_t(spend_public_key)
 export function derivePublicKey(
-  c_point_G: Buffer,
+  pointG: Buffer,
   derivation: Buffer,
   outIndex: number,
   pubSpendKeyBuf: Buffer,
 ): void {
-  derivationToScalar(c_point_G, derivation, outIndex); // h = Hs(8 * r * V, i)
-  sodium.crypto_scalarmult_ed25519_base_noclamp(c_point_G, c_point_G);
-  sodium.crypto_core_ed25519_add(c_point_G, pubSpendKeyBuf, c_point_G);
+  derivationToScalar(pointG, derivation, outIndex); // h = Hs(8 * r * V, i)
+  sodium.crypto_scalarmult_ed25519_base_noclamp(pointG, pointG);
+  sodium.crypto_core_ed25519_add(pointG, pubSpendKeyBuf, pointG);
 }
 
 function derivationToScalar(scalar: Buffer, derivation: Buffer, outIndex: number): void {
@@ -64,8 +64,9 @@ function fastHash(data: Buffer): Buffer {
   return hash;
 }
 
-export function hs(str32: Buffer, h: Buffer): Buffer {
-  const elements: Buffer[] = [str32, h];
+// Hs(domain_sep, Hs(8 * r * V, i) )
+export function hs(str32: Buffer, scalar: Buffer): Buffer {
+  const elements: Buffer[] = [str32, scalar];
   const hashScalar: Buffer = allocateEd25519Scalar();
   const data: Buffer = Buffer.concat(elements);
   hashToScalar(hashScalar, data);
