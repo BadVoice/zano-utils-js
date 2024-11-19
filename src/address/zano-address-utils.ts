@@ -27,7 +27,7 @@ export class ZanoAddressUtils {
       const tag: number = INTEGRATED_ADDRESS_TAG_PREFIX;
       const flag: number = INTEGRATED_ADDRESS_FLAG_PREFIX;
 
-      let offset = TAG_LENGTH + FLAG_LENGTH;
+      let offset: number = TAG_LENGTH + FLAG_LENGTH;
       const viewPublicKey: Buffer = decodedAddress.subarray(offset, offset + VIEW_KEY_LENGTH);
       offset += VIEW_KEY_LENGTH;
       const spendPublicKey: Buffer = decodedAddress.subarray(offset, offset + SPEND_KEY_LENGTH);
