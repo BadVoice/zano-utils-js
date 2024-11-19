@@ -96,7 +96,7 @@ describe('Integrated Address Handling', () => {
 
   // Compute desired outcomes for the slice operation
   const integratedAddressWithoutSuffix: string = integratedAddress.slice(0, -18);
-  const masterBasedIntegratedAddressWithoutSuffix = masterBasedIntegratedAddress.slice(0, -18);
+  const masterBasedIntegratedAddressWithoutSuffix: string = masterBasedIntegratedAddress.slice(0, -18);
 
   // Addresses returned by zanoAddressUtils
   const addressFromIntegrated: string = zanoAddressUtils.getIntegratedAddress(integratedAddress);
