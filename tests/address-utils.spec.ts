@@ -53,7 +53,7 @@ describe(
     const viewPublicKey = 'a3f208c8f9ba49bab28eed62b35b0f6be0a297bcd85c2faa1eb1820527bcf7e3';
 
     it('checking the correctness of the address format (ADDRESS_REGEX)', () => {
-      expect((zanoAddressUtils.getKeysFromZarcanumAddress(address))).toStrictEqual({
+      expect((zanoAddressUtils.getKeysFromAddress(address))).toStrictEqual({
         spendPublicKey,
         viewPublicKey,
       });
@@ -61,14 +61,14 @@ describe(
 
     it('should throw an error for invalid address format', () => {
       expect(() => {
-        zanoAddressUtils.getKeysFromZarcanumAddress('invalid');
-      }).toThrow('Invalid Address format');
+        zanoAddressUtils.getKeysFromAddress('invalid');
+      }).toThrow('Invalid address format');
     });
 
     it('should throw an invalid character in base58 string', () => {
       const invalidAddress = 'ZxD5aoLDPTdcaRx4uOpyW4XiLfEXejepAVz8cSY2fwHNEiJNu6NmpBBDLGTJzCsUvn3acCVDVDPMV8yQXdPooAp338Se7AxeH';
       expect(() => {
-        zanoAddressUtils.getKeysFromZarcanumAddress(invalidAddress);
+        zanoAddressUtils.getKeysFromAddress(invalidAddress);
       }).toThrow('base58 string block contains invalid character');
     });
 
@@ -81,7 +81,33 @@ describe(
 
     it('should throw an invalid address checksum', () => {
       expect(() => {
-        (zanoAddressUtils.getKeysFromZarcanumAddress('Zx' + '1'.repeat(95)));
+        (zanoAddressUtils.getKeysFromAddress('Zx' + '1'.repeat(95)));
       }).toThrow('Invalid address checksum');
     });
   });
+
+describe('Integrated Address Handling', () => {
+  const zanoAddressUtils = new ZanoAddressUtils();
+
+  // Define test data
+  const integratedAddress: string = 'iZ2kFmwxRHoaRxm1ni8HnfUTkYuKbni8s4CE2Z4GgFfH99BJ6cnbAtJTgUnZjPj9CTCTKy1qqM9wPCTp92uBC7e47JPoHxGL5UU2D1tpQMg4';
+  const masterAddress: string = 'ZxD5aoLDPTdcaRx4uCpyW4XiLfEXejepAVz8cSY2fwHNEiJNu6NmpBBDLGTJzCsUvn3acCVDVDPMV8yQXdPooAp338Se7AxeH';
+  const masterBasedIntegratedAddress: string = 'iZ2Zi6RmTWwcaRx4uCpyW4XiLfEXejepAVz8cSY2fwHNEiJNu6NmpBBDLGTJzCsUvn3acCVDVDPMV8yQXdPooAp3iTqEsjvJoco1aLSZXS6T';
+
+  // Compute desired outcomes for the slice operation
+  const integratedAddressWithoutSuffix: string = integratedAddress.slice(0, -18);
+  const masterBasedIntegratedAddressWithoutSuffix = masterBasedIntegratedAddress.slice(0, -18);
+
+  // Addresses returned by zanoAddressUtils
+  const addressFromIntegrated: string = zanoAddressUtils.getIntegratedAddress(integratedAddress);
+  const addressFromMaster: string = zanoAddressUtils.getIntegratedAddress(masterAddress);
+
+  it('ensures that truncating the last 18 characters from integrated address is correct', () => {
+    expect(addressFromIntegrated.slice(0, -18)).toBe(integratedAddressWithoutSuffix);
+  });
+
+  it('ensures that truncating the last 18 characters from master-based integrated address is correct', () => {
+    expect(addressFromMaster.slice(0, -18)).toBe(masterBasedIntegratedAddressWithoutSuffix);
+  });
+
+})
