@@ -32,7 +32,7 @@
   },
   "devDependencies": {
     "@types/big.js": "^6",
-    "@types/jest": "^26.0.24",
+    "@types/jest": "^29.5.14",
     "@types/keccak": "^3.0.5",
     "@types/node": "^18",
     "@types/sodium-native": "^2.3.5",

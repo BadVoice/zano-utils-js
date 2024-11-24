@@ -49,7 +49,7 @@ describe(
 describe(
   'testing the correctness of the address decoding function getKeysFromZarcanumAddress',
   () => {
-    const zanoAddressUtils = new ZanoAddressUtils();
+    const zanoAddressUtils: ZanoAddressUtils = new ZanoAddressUtils();
     const address = 'ZxD5aoLDPTdcaRx4uCpyW4XiLfEXejepAVz8cSY2fwHNEiJNu6NmpBBDLGTJzCsUvn3acCVDVDPMV8yQXdPooAp338Se7AxeH';
     const spendPublicKey = '9f5e1fa93630d4b281b18bb67a3db79e9622fc703cc3ad4a453a82e0a36d51fa';
     const viewPublicKey = 'a3f208c8f9ba49bab28eed62b35b0f6be0a297bcd85c2faa1eb1820527bcf7e3';
@@ -91,15 +91,15 @@ describe(
 
 describe('getIntegratedAddress', () => {
   const zanoAddressUtils: ZanoAddressUtils = new ZanoAddressUtils();
-  const SUFFIX_LENGTH: number = 18; // paymentId + checksum
+  const SUFFIX_LENGTH = 18; // paymentId + checksum
 
   // Define test data
-  const integratedAddress: string = 'iZ2kFmwxRHoaRxm1ni8HnfUTkYuKbni8s4CE2Z4GgFfH99BJ6cnbAtJTgUnZjPj9CTCTKy1qqM9wPCTp92uBC7e47JPoHxGL5UU2D1tpQMg4';
-  const masterAddress: string = 'ZxD5aoLDPTdcaRx4uCpyW4XiLfEXejepAVz8cSY2fwHNEiJNu6NmpBBDLGTJzCsUvn3acCVDVDPMV8yQXdPooAp338Se7AxeH';
-  const masterAddress2: string = 'ZxDG8UrQMEVaRxm1ni8HnfUTkYuKbni8s4CE2Z4GgFfH99BJ6cnbAtJTgUnZjPj9CTCTKy1qqM9wPCTp92uBC7e41KkqnWH8F';
+  const integratedAddress = 'iZ2kFmwxRHoaRxm1ni8HnfUTkYuKbni8s4CE2Z4GgFfH99BJ6cnbAtJTgUnZjPj9CTCTKy1qqM9wPCTp92uBC7e47JPoHxGL5UU2D1tpQMg4';
+  const masterAddress = 'ZxD5aoLDPTdcaRx4uCpyW4XiLfEXejepAVz8cSY2fwHNEiJNu6NmpBBDLGTJzCsUvn3acCVDVDPMV8yQXdPooAp338Se7AxeH';
+  const masterAddress2 = 'ZxDG8UrQMEVaRxm1ni8HnfUTkYuKbni8s4CE2Z4GgFfH99BJ6cnbAtJTgUnZjPj9CTCTKy1qqM9wPCTp92uBC7e41KkqnWH8F';
 
-  const masterBasedIntegratedAddress: string = 'iZ2Zi6RmTWwcaRx4uCpyW4XiLfEXejepAVz8cSY2fwHNEiJNu6NmpBBDLGTJzCsUvn3acCVDVDPMV8yQXdPooAp3iTqEsjvJoco1aLSZXS6T';
-  const master2BasedIntegratedAddress: string = 'iZ2kFmwxRHoaRxm1ni8HnfUTkYuKbni8s4CE2Z4GgFfH99BJ6cnbAtJTgUnZjPj9CTCTKy1qqM9wPCTp92uBC7e47JQQbd6iYGx1S6AdHpq6';
+  const masterBasedIntegratedAddress = 'iZ2Zi6RmTWwcaRx4uCpyW4XiLfEXejepAVz8cSY2fwHNEiJNu6NmpBBDLGTJzCsUvn3acCVDVDPMV8yQXdPooAp3iTqEsjvJoco1aLSZXS6T';
+  const master2BasedIntegratedAddress = 'iZ2kFmwxRHoaRxm1ni8HnfUTkYuKbni8s4CE2Z4GgFfH99BJ6cnbAtJTgUnZjPj9CTCTKy1qqM9wPCTp92uBC7e47JQQbd6iYGx1S6AdHpq6';
 
   // Compute desired outcomes for the slice operation
   const integratedAddressWithoutSuffix: string = integratedAddress.slice(0, -SUFFIX_LENGTH);
