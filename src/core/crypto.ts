@@ -3,14 +3,22 @@ import createKeccakHash from 'keccak';
 import sodium from 'sodium-native';
 
 import { serializeVarUint } from './serialize';
-import { SCALAR_1DIV8 } from '../transaction/constants';
-
 
 const ADDRESS_CHECKSUM_SIZE = 8;
 const EC_POINT_SIZE: number = sodium.crypto_core_ed25519_BYTES;
 const EC_SCALAR_SIZE: number = sodium.crypto_core_ed25519_SCALARBYTES;
 const ZERO: Buffer = allocateEd25519Scalar();
 const EIGHT: Buffer = allocateEd25519Scalar().fill(8, 0, 1);
+export const SCALAR_1DIV8: Buffer = (() => {
+  const scalar: Buffer = Buffer.alloc(32);
+
+  scalar.writeBigUInt64LE(BigInt('0x6106e529e2dc2f79'), 0);
+  scalar.writeBigUInt64LE(BigInt('0x07d39db37d1cdad0'), 8);
+  scalar.writeBigUInt64LE(BigInt('0x0'), 16);
+  scalar.writeBigUInt64LE(BigInt('0x0600000000000000'), 24);
+
+  return scalar;
+})();
 
 export function getChecksum(buffer: Buffer): string {
   return sha3.keccak_256(buffer).substring(0, ADDRESS_CHECKSUM_SIZE);
