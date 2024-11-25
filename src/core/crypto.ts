@@ -3,6 +3,8 @@ import createKeccakHash from 'keccak';
 import sodium from 'sodium-native';
 
 import { serializeVarUint } from './serialize';
+import { SCALAR_1DIV8 } from '../transaction/constants';
+
 
 const ADDRESS_CHECKSUM_SIZE = 8;
 const EC_POINT_SIZE: number = sodium.crypto_core_ed25519_BYTES;
@@ -32,6 +34,20 @@ export function calculateConcealingPoint(Hs: Buffer, pubViewKeyBuff: Buffer): Bu
   const concealingPoint: Buffer = allocateEd25519Point();
   sodium.crypto_scalarmult_ed25519_noclamp(concealingPoint, Hs,  pubViewKeyBuff);
   return concealingPoint;
+}
+
+// crypto::point_t asset_id = blinded_asset_id - asset_id_blinding_mask * crypto::c_point_X; // H = T - s * X
+export function calculateBlindedAssetId(Hs: Buffer, assetId: Buffer, X: Buffer): Buffer {
+  const sX: Buffer = allocateEd25519Point();
+  sodium.crypto_scalarmult_ed25519_noclamp(sX, Hs, X);
+
+  const pointT: Buffer = allocateEd25519Point();
+  sodium.crypto_core_ed25519_add(pointT, assetId, sX);
+
+  const blindedAssetId: Buffer = allocateEd25519Point();
+  sodium.crypto_scalarmult_ed25519_noclamp(blindedAssetId, SCALAR_1DIV8, pointT);
+
+  return blindedAssetId;
 }
 
 export function generateKeyDerivation(derivation: Buffer, txPubKey: Buffer, secKeyView: Buffer): void {
