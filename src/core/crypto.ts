@@ -9,6 +9,16 @@ const EC_POINT_SIZE: number = sodium.crypto_core_ed25519_BYTES;
 const EC_SCALAR_SIZE: number = sodium.crypto_core_ed25519_SCALARBYTES;
 const ZERO: Buffer = allocateEd25519Scalar();
 const EIGHT: Buffer = allocateEd25519Scalar().fill(8, 0, 1);
+export const SCALAR_1DIV8: Buffer = (() => {
+  const scalar: Buffer = Buffer.alloc(32);
+
+  scalar.writeBigUInt64LE(BigInt('0x6106e529e2dc2f79'), 0);
+  scalar.writeBigUInt64LE(BigInt('0x07d39db37d1cdad0'), 8);
+  scalar.writeBigUInt64LE(BigInt('0x0'), 16);
+  scalar.writeBigUInt64LE(BigInt('0x0600000000000000'), 24);
+
+  return scalar;
+})();
 
 export function getChecksum(buffer: Buffer): string {
   return sha3.keccak_256(buffer).substring(0, ADDRESS_CHECKSUM_SIZE);
@@ -32,6 +42,20 @@ export function calculateConcealingPoint(Hs: Buffer, pubViewKeyBuff: Buffer): Bu
   const concealingPoint: Buffer = allocateEd25519Point();
   sodium.crypto_scalarmult_ed25519_noclamp(concealingPoint, Hs,  pubViewKeyBuff);
   return concealingPoint;
+}
+
+// crypto::point_t asset_id = blinded_asset_id - asset_id_blinding_mask * crypto::c_point_X; // H = T - s * X
+export function calculateBlindedAssetId(Hs: Buffer, assetId: Buffer, X: Buffer): Buffer {
+  const sX: Buffer = allocateEd25519Point();
+  sodium.crypto_scalarmult_ed25519_noclamp(sX, Hs, X);
+
+  const pointT: Buffer = allocateEd25519Point();
+  sodium.crypto_core_ed25519_add(pointT, assetId, sX);
+
+  const blindedAssetId: Buffer = allocateEd25519Point();
+  sodium.crypto_scalarmult_ed25519_noclamp(blindedAssetId, SCALAR_1DIV8, pointT);
+
+  return blindedAssetId;
 }
 
 export function generateKeyDerivation(derivation: Buffer, txPubKey: Buffer, secKeyView: Buffer): void {

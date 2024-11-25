@@ -93,7 +93,7 @@ function runTestEncodeAddress(address: string, viewPubKey: string, spendPubKey: 
 
 function runTestGetZarcanumKeys(address: string, viewPubKey: string, spendPubKey: string): void {
   const zanoAddressUtils: ZanoAddressUtils = new ZanoAddressUtils();
-  const keysFromAddress: ZarcanumAddressKeys = zanoAddressUtils.getKeysFromZarcanumAddress(address);
+  const keysFromAddress: ZarcanumAddressKeys = zanoAddressUtils.getKeysFromAddress(address);
 
   if(keysFromAddress.spendPublicKey !== spendPubKey) {
     throw new Error('spendPubKey not matched.');
