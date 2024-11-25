@@ -1,10 +1,11 @@
 {
-  "name": "zano-utils-js",
+  "name": "@badvoice/zano-utils-js",
   "version": "0.0.1",
   "repository": "git@github.com:BadVoice/Zano-utils-js.git",
   "author": "BadVoice <https://t.me/GermanSmurov>",
-  "license": "UNLICENSED",
   "main": "dist/index.js",
+  "private": false,
+  "license": "MIT",
   "types": "dist/index.d.ts",
   "files": [
     "/dist"
@@ -32,7 +33,7 @@
   },
   "devDependencies": {
     "@types/big.js": "^6",
-    "@types/jest": "^26.0.24",
+    "@types/jest": "^29.5.14",
     "@types/keccak": "^3.0.5",
     "@types/node": "^18",
     "@types/sodium-native": "^2.3.5",

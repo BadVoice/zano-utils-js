@@ -41,7 +41,7 @@ export class ZanoTransactionUtils {
   decodeAmount(viewSecretKey: string, txPubKey: string, outputIndex: number, encryptedAmount: number): bigint {
     const scalarH: Buffer = getDerivationToScalar(txPubKey, viewSecretKey, outputIndex);
     const Hs: Buffer = hs(CRYPTO_HDS_OUT_AMOUNT_MASK, scalarH);
-    const amountMask: bigint = BigInt(Hs.readBigUInt64LE(0));
+    const amountMask = BigInt(Hs.readBigUInt64LE(0));
 
     return BigInt(encryptedAmount) ^ amountMask;
   }
