@@ -1,5 +1,12 @@
-import { CRYPTO_HDS_OUT_CONCEALING_POINT, CRYPTO_HDS_OUT_AMOUNT_MASK } from './constants';
 import {
+  POINT_X,
+  NATIVE_ASSET_ID,
+  CRYPTO_HDS_OUT_ASSET_BLIND_MASK,
+  CRYPTO_HDS_OUT_CONCEALING_POINT,
+  CRYPTO_HDS_OUT_AMOUNT_MASK,
+} from './constants';
+import {
+  calculateBlindedAssetId,
   derivePublicKey,
   generateKeyDerivation,
   allocateEd25519Point,
@@ -44,5 +51,19 @@ export class ZanoTransactionUtils {
     const amountMask = BigInt(Hs.readBigUInt64LE(0));
 
     return BigInt(encryptedAmount) ^ amountMask;
+  }
+
+  // crypto::point_t(de.asset_id) + asset_blinding_mask * crypto::c_point_X;
+  // H = T + s * X
+  /*
+   Calculate blindedAsset based on native asset id, pointX, blindedMask.
+   We will be able to check if the output is native or not
+  */
+  getNativeBlindedAsset(viewSecretKey: string, txPubKey: string, outputIndex: number): string {
+    const h: Buffer = getDerivationToScalar(txPubKey, viewSecretKey, outputIndex); // h = Hs(8 * r * V, i)
+    const s: Buffer = hs(CRYPTO_HDS_OUT_ASSET_BLIND_MASK, h); // Hs(domain_sep, Hs(8 * r * V, i) )
+
+    const blindedAssetId: Buffer = calculateBlindedAssetId(s, NATIVE_ASSET_ID, POINT_X);
+    return blindedAssetId.toString('hex');
   }
 }
