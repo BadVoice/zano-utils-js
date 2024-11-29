@@ -15,28 +15,28 @@ import {
   ADDRESS_REGEX,
 } from './constants';
 import { ZarcanumAddressKeys } from './types';
+import {
+  addressValidate,
+  decodedAddress,
+  paymentIdValidate,
+} from './utils';
 import { base58Encode, base58Decode } from '../core/base58';
 import { getChecksum } from '../core/crypto';
+
 
 export class ZanoAddressUtils {
 
   getIntegratedAddress(address: string): string {
     try {
-      const decodedAddress: Buffer = base58Decode(address);
+      addressValidate(address);
 
-      const tag: number = INTEGRATED_ADDRESS_TAG_PREFIX;
-      const flag: number = INTEGRATED_ADDRESS_FLAG_PREFIX;
-
-      let offset: number = TAG_LENGTH + FLAG_LENGTH;
-      const viewPublicKey: Buffer = decodedAddress.subarray(offset, offset + VIEW_KEY_LENGTH);
-      offset += VIEW_KEY_LENGTH;
-      const spendPublicKey: Buffer = decodedAddress.subarray(offset, offset + SPEND_KEY_LENGTH);
       const paymentId: Buffer = Buffer.from(this.generatePaymentId());
+      paymentIdValidate(paymentId);
 
       const integratedAddressBuffer: Buffer = Buffer.concat([
-        Buffer.from([tag, flag]),
-        viewPublicKey,
-        spendPublicKey,
+        Buffer.from([decodedAddress(address).tag, decodedAddress(address).flag]),
+        decodedAddress(address).viewPublicKey,
+        decodedAddress(address).spendPublicKey,
         paymentId,
       ]);
 
@@ -45,6 +45,28 @@ export class ZanoAddressUtils {
     } catch (error) {
       throw new Error(error.message);
     }
+  }
+
+  createIntegratedAddress(address: string, paymentId: string): string {
+    try {
+      addressValidate(address);
+
+      const paymentIdBuffer: Buffer = Buffer.from(paymentId);
+      paymentIdValidate(paymentIdBuffer);
+
+      const integratedAddressBuffer: Buffer = Buffer.concat([
+        Buffer.from([decodedAddress(address).tag, decodedAddress(address).flag]),
+        decodedAddress(address).viewPublicKey,
+        decodedAddress(address).spendPublicKey,
+        paymentIdBuffer,
+      ]);
+
+      const checksum: string = getChecksum(integratedAddressBuffer);
+      return base58Encode(Buffer.concat([integratedAddressBuffer, Buffer.from(checksum, 'hex')]));
+    } catch (error) {
+      throw new Error(error.message);
+    }
+
   }
 
   encodeAddress(tag: number, flag: number, spendPublicKey: string, viewPublicKey: string): string {
