@@ -25,7 +25,6 @@ export class ZanoAddressUtils {
   getIntegratedAddress(address: string): string {
     try {
       const paymentId: Buffer = Buffer.from(this.generatePaymentId());
-      paymentIdValidate(paymentId.toString('hex'));
 
       if (this.addressValidate(address)) {
 
