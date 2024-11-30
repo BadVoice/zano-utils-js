@@ -14,12 +14,8 @@ import {
   VIEW_KEY_LENGTH,
   ADDRESS_REGEX,
 } from './constants';
-import { ZarcanumAddressKeys } from './types';
-import {
-  addressValidate,
-  decodedAddress,
-  paymentIdValidate,
-} from './utils';
+import { DecodedAddress, ZarcanumAddressKeys } from './types';
+import { paymentIdValidate } from '../common/utils';
 import { base58Encode, base58Decode } from '../core/base58';
 import { getChecksum } from '../core/crypto';
 
@@ -28,20 +24,29 @@ export class ZanoAddressUtils {
 
   getIntegratedAddress(address: string): string {
     try {
-      addressValidate(address);
-
       const paymentId: Buffer = Buffer.from(this.generatePaymentId());
-      paymentIdValidate(paymentId);
+      paymentIdValidate(paymentId.toString('hex'));
 
-      const integratedAddressBuffer: Buffer = Buffer.concat([
-        Buffer.from([decodedAddress(address).tag, decodedAddress(address).flag]),
-        decodedAddress(address).viewPublicKey,
-        decodedAddress(address).spendPublicKey,
-        paymentId,
-      ]);
+      if (this.addressValidate(address)) {
 
-      const checksum: string = getChecksum(integratedAddressBuffer);
-      return base58Encode(Buffer.concat([integratedAddressBuffer, Buffer.from(checksum, 'hex')]));
+        const {
+          tag,
+          flag,
+          viewPublicKey,
+          spendPublicKey,
+        }: DecodedAddress = this.decodeAddress(address);
+
+        const integratedAddressBuffer: Buffer = Buffer.concat([
+          Buffer.from([tag, flag]),
+          viewPublicKey,
+          spendPublicKey,
+          paymentId,
+        ]);
+        const checksum: string = getChecksum(integratedAddressBuffer);
+        return base58Encode(Buffer.concat([integratedAddressBuffer, Buffer.from(checksum, 'hex')]));
+      } else {
+        return 'Invalid address format';
+      }
     } catch (error) {
       throw new Error(error.message);
     }
@@ -49,20 +54,30 @@ export class ZanoAddressUtils {
 
   createIntegratedAddress(address: string, paymentId: string): string {
     try {
-      addressValidate(address);
-
+      paymentIdValidate(paymentId);
       const paymentIdBuffer: Buffer = Buffer.from(paymentId);
-      paymentIdValidate(paymentIdBuffer);
 
-      const integratedAddressBuffer: Buffer = Buffer.concat([
-        Buffer.from([decodedAddress(address).tag, decodedAddress(address).flag]),
-        decodedAddress(address).viewPublicKey,
-        decodedAddress(address).spendPublicKey,
-        paymentIdBuffer,
-      ]);
+      if (this.addressValidate(address)) {
 
-      const checksum: string = getChecksum(integratedAddressBuffer);
-      return base58Encode(Buffer.concat([integratedAddressBuffer, Buffer.from(checksum, 'hex')]));
+        const {
+          tag,
+          flag,
+          viewPublicKey,
+          spendPublicKey,
+        }: DecodedAddress = this.decodeAddress(address);
+
+        const integratedAddressBuffer: Buffer = Buffer.concat([
+          Buffer.from([tag, flag]),
+          viewPublicKey,
+          spendPublicKey,
+          paymentIdBuffer,
+        ]);
+
+        const checksum: string = getChecksum(integratedAddressBuffer);
+        return base58Encode(Buffer.concat([integratedAddressBuffer, Buffer.from(checksum, 'hex')]));
+      } else {
+        return 'Invalid address format';
+      }
     } catch (error) {
       throw new Error(error.message);
     }
@@ -149,6 +164,35 @@ export class ZanoAddressUtils {
   }
 
   private generatePaymentId(): string {
-    return crypto.randomBytes(PAYMENT_ID_LENGTH).toString('hex');
+    let paymentId: string;
+    do {
+      paymentId = crypto.randomBytes(PAYMENT_ID_LENGTH).toString('hex');
+    } while (!paymentIdValidate(paymentId));
+    return paymentId;
   }
+
+  private decodeAddress(address: string): DecodedAddress {
+    const decodedAddress: Buffer = base58Decode(address);
+    const tag: number = INTEGRATED_ADDRESS_TAG_PREFIX;
+    const flag: number = INTEGRATED_ADDRESS_FLAG_PREFIX;
+    let offset: number = TAG_LENGTH + FLAG_LENGTH;
+    const viewPublicKey: Buffer = decodedAddress.subarray(offset, offset + VIEW_KEY_LENGTH);
+    offset += VIEW_KEY_LENGTH;
+    const spendPublicKey: Buffer = decodedAddress.subarray(offset, offset + SPEND_KEY_LENGTH);
+
+    return{
+      tag,
+      flag,
+      viewPublicKey,
+      spendPublicKey,
+    };
+  }
+
+  private addressValidate(address: string): boolean {
+    if (!(INTEGRATED_ADDRESS_REGEX.test(address) || ADDRESS_REGEX.test(address))) {
+      throw new Error('Invalid address format');
+    }
+    return true;
+  }
+
 }

@@ -1,5 +1,3 @@
-import { base58Decode } from '../core/base58';
-
 export const TAG_LENGTH = 1;
 export const FLAG_LENGTH = 1;
 export const SPEND_KEY_LENGTH = 32;

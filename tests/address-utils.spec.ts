@@ -126,35 +126,35 @@ describe('getIntegratedAddress', () => {
 
 describe('createIntegratedAddress', () => {
   const zanoAddressUtils: ZanoAddressUtils = new ZanoAddressUtils();
-  const SUFFIX_LENGTH: number = 18; // paymentId + checksum
+  const paymentId: string = '3535bb68';
 
   // Define test data
-  const integratedAddress: string = 'iZ2kFmwxRHoaRxm1ni8HnfUTkYuKbni8s4CE2Z4GgFfH99BJ6cnbAtJTgUnZjPj9CTCTKy1qqM9wPCTp92uBC7e47JPoHxGL5UU2D1tpQMg4';
+  const integratedAddress: string = 'iZ2kFmwxRHoaRxm1ni8HnfUTkYuKbni8s4CE2Z4GgFfH99BJ6cnbAtJTgUnZjPj9CTCTKy1qqM9wPCTp92uBC7e47JPyhpqjfr11U14a4Tpm';
   const masterAddress: string = 'ZxD5aoLDPTdcaRx4uCpyW4XiLfEXejepAVz8cSY2fwHNEiJNu6NmpBBDLGTJzCsUvn3acCVDVDPMV8yQXdPooAp338Se7AxeH';
   const masterAddress2: string = 'ZxDG8UrQMEVaRxm1ni8HnfUTkYuKbni8s4CE2Z4GgFfH99BJ6cnbAtJTgUnZjPj9CTCTKy1qqM9wPCTp92uBC7e41KkqnWH8F';
 
-  const masterBasedIntegratedAddress: string = 'iZ2Zi6RmTWwcaRx4uCpyW4XiLfEXejepAVz8cSY2fwHNEiJNu6NmpBBDLGTJzCsUvn3acCVDVDPMV8yQXdPooAp3iTqEsjvJoco1aLSZXS6T';
-  const master2BasedIntegratedAddress: string = 'iZ2kFmwxRHoaRxm1ni8HnfUTkYuKbni8s4CE2Z4GgFfH99BJ6cnbAtJTgUnZjPj9CTCTKy1qqM9wPCTp92uBC7e47JQQbd6iYGx1S6AdHpq6';
+  const masterBasedIntegratedAddress: string = 'iZ2Zi6RmTWwcaRx4uCpyW4XiLfEXejepAVz8cSY2fwHNEiJNu6NmpBBDLGTJzCsUvn3acCVDVDPMV8yQXdPooAp3iTpX1x9Qbmj1U12u9nn2';
+  const master2BasedIntegratedAddress: string = 'iZ2kFmwxRHoaRxm1ni8HnfUTkYuKbni8s4CE2Z4GgFfH99BJ6cnbAtJTgUnZjPj9CTCTKy1qqM9wPCTp92uBC7e47JPyhpqjfr11U14a4Tpm';
 
   // Compute desired outcomes for the slice operation
-  const integratedAddressWithoutSuffix: string = integratedAddress.slice(0, -SUFFIX_LENGTH);
-  const masterBasedIntegratedAddressWithoutSuffix: string = masterBasedIntegratedAddress.slice(0, -SUFFIX_LENGTH);
-  const master2BasedIntegratedAddressWithoutSuffix: string = master2BasedIntegratedAddress.slice(0, -SUFFIX_LENGTH);
+  // const integratedAddressWithoutSuffix: string = integratedAddress.slice(0, -SUFFIX_LENGTH);
+  // const masterBasedIntegratedAddressWithoutSuffix: string = masterBasedIntegratedAddress.slice(0, -SUFFIX_LENGTH);
+  // const master2BasedIntegratedAddressWithoutSuffix: string = master2BasedIntegratedAddress.slice(0, -SUFFIX_LENGTH);
 
   // Addresses returned by zanoAddressUtils
-  const addressFromIntegrated: string = zanoAddressUtils.createIntegratedAddress(integratedAddress, '3535bb68');
-  const addressFromMaster: string = zanoAddressUtils.createIntegratedAddress(masterAddress, '3535bb68');
-  const addressFromMaster2: string = zanoAddressUtils.createIntegratedAddress(masterAddress2, '3535bb68');
+  const addressFromIntegrated: string = zanoAddressUtils.createIntegratedAddress(integratedAddress, paymentId);
+  const addressFromMaster: string = zanoAddressUtils.createIntegratedAddress(masterAddress, paymentId);
+  const addressFromMaster2: string = zanoAddressUtils.createIntegratedAddress(masterAddress2, paymentId);
 
   it('ensures that truncating the last 18 characters from the integrated address is correct', () => {
-    expect(addressFromIntegrated.slice(0, -SUFFIX_LENGTH)).toBe(integratedAddressWithoutSuffix);
+    expect(addressFromIntegrated).toBe(integratedAddress);
   });
 
   it('ensures that truncating the last 18 characters from the master-based integrated address is correct', () => {
-    expect(addressFromMaster.slice(0, -SUFFIX_LENGTH)).toBe(masterBasedIntegratedAddressWithoutSuffix);
+    expect(addressFromMaster).toBe(masterBasedIntegratedAddress);
   });
 
   it('ensures that truncating the last 18 characters from the second master-based integrated address is correct', () => {
-    expect(addressFromMaster2.slice(0, -SUFFIX_LENGTH)).toBe(master2BasedIntegratedAddressWithoutSuffix);
+    expect(addressFromMaster2).toBe(master2BasedIntegratedAddress);
   });
 });
