@@ -6,6 +6,7 @@ import {
   CRYPTO_HDS_OUT_CONCEALING_POINT,
 } from './constants';
 import {
+  chachaCrypt,
   generateKeyImage,
   deriveSecretKey,
   calculateBlindedAssetId,
@@ -116,5 +117,16 @@ export class ZanoTransactionUtils {
 
     const keyImage: Buffer = generateKeyImage(stealthAddress, secret);
     return keyImage.toString('hex');
+  }
+
+  decryptPaymentId(encryptedPaymentId: string, txPubKey: string, secViewKey: string): string {
+    const encryptedPaymentIdBuf: Buffer = Buffer.from(encryptedPaymentId, 'hex');
+    const txPubKeyBuff: Buffer = Buffer.from(txPubKey, 'hex');
+    const secViewKeyBuff: Buffer = Buffer.from(secViewKey, 'hex');
+
+    const derivation: Buffer = allocateEd25519Point();
+    generateKeyDerivation(derivation, txPubKeyBuff, secViewKeyBuff);
+    const encrypted: Buffer = chachaCrypt(encryptedPaymentIdBuf, derivation);
+    return encrypted.toString('hex');
   }
 }

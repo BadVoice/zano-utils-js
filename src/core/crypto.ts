@@ -4,6 +4,7 @@ import * as sha3 from 'js-sha3';
 import createKeccakHash from 'keccak';
 import sodium from 'sodium-native';
 
+import { chacha8 } from './chacha8';
 import {
   fffb4,
   fffb3,
@@ -37,6 +38,7 @@ export const SCALAR_1DIV8: Buffer = (() => {
 
   return scalar;
 })();
+export const HASH_SIZE = 32;
 
 export function getChecksum(buffer: Buffer): string {
   return sha3.keccak_256(buffer).substring(0, ADDRESS_CHECKSUM_SIZE);
@@ -275,4 +277,20 @@ export function hashToPoint(hash: Buffer): curve.edwards.EdwardsPoint {
   x = x.redMul(z);
 
   return ec.curve.point(x, y, z);
+}
+
+export function generateChaCha8Key(pass: Buffer) {
+  const hash: Buffer = fastHash(pass);
+  if (hash.length !== HASH_SIZE) {
+    throw new Error('Size of hash must be at least that of chacha8_key');
+  }
+  return hash;
+}
+
+export function chachaCrypt(paymentId: Buffer, derivation: Buffer): Buffer {
+  const key: Buffer = generateChaCha8Key(Buffer.from(derivation));
+  const iv: Uint8Array = new Uint8Array(Buffer.alloc(12).fill(0));
+  const decryptedBuff: Uint8Array = chacha8(key, iv, paymentId);
+
+  return Buffer.from(decryptedBuff);
 }

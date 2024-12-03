@@ -31,7 +31,7 @@ export class ZanoAddressUtils {
       const viewPublicKey: Buffer = decodedAddress.subarray(offset, offset + VIEW_KEY_LENGTH);
       offset += VIEW_KEY_LENGTH;
       const spendPublicKey: Buffer = decodedAddress.subarray(offset, offset + SPEND_KEY_LENGTH);
-      const paymentId: Buffer = Buffer.from(this.generatePaymentId());
+      const paymentId: Buffer = Buffer.from(this.generatePaymentId(), 'hex');
 
       const integratedAddressBuffer: Buffer = Buffer.concat([
         Buffer.from([tag, flag]),
