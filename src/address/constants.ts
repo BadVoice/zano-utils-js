@@ -11,7 +11,8 @@ export const BUFFER_ADDRESS_LENGTH: number =
   CHECKSUM_LENGTH;
 export const ADDRESS_REGEX = /^Z[a-zA-Z0-9]{96}$/;
 export const INTEGRATED_ADDRESS_REGEX = /^iZ[a-zA-Z0-9]{106}$/;
-export const PAYMENT_ID_LENGTH = 4;
+export const PAYMENT_ID_LENGTH = 8;
+export const PAYMENT_ID_REGEX = /^[a-zA-Z0-9]{8}$/;
 export const INTEGRATED_ADDRESS_FLAG_PREFIX = 0x6c;
 export const INTEGRATED_ADDRESS_TAG_PREFIX = 0xf8;
 export const BUFFER_INTEGRATED_ADDRESS_LENGTH =
