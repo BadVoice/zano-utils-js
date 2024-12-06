@@ -44,13 +44,11 @@ export class ZanoAddressUtils {
 
   createIntegratedAddress(address: string, paymentId: string): string {
     if (!this.validateAddress(address)) {
-      console.error('Invalid address format');
-      return null;
+      throw new Error('Invalid address format');
     }
 
     if (!this.validatePaymentId(paymentId)) {
-      console.error('Invalid payment ID format');
-      return null;
+      throw new Error('Invalid payment ID format');
     }
 
     try {
@@ -58,13 +56,12 @@ export class ZanoAddressUtils {
       const addressDecoded: DecodedAddress = this.decodeAddress(address);
 
       if (!addressDecoded) {
-        return null;
+        throw new Error('Missing decoded address');
       }
 
       return this.formatIntegratedAddress(addressDecoded, paymentIdBuffer);
     } catch (error) {
-      console.error('Error creating integrated address:', error.message);
-      return null;
+      throw new Error(error.message);
     }
   }
 
@@ -141,7 +138,7 @@ export class ZanoAddressUtils {
 
     if (!spendPublicKey || spendPublicKey.length !== SPEND_KEY_LENGTH * 2 ||
         !viewPublicKey || viewPublicKey.length !== VIEW_KEY_LENGTH * 2) {
-      throw new Error('Invalid key format in the address.');
+      throw new Error('Invalid key format in the address');
     }
 
     return { spendPublicKey, viewPublicKey };
@@ -151,8 +148,7 @@ export class ZanoAddressUtils {
     try {
       const decodedAddress: Buffer = base58Decode(address);
       if(!decodedAddress) {
-        console.error('Invalid decode address');
-        return null;
+        throw new Error('Invalid decode address');
       }
 
       let offset = TAG_LENGTH + FLAG_LENGTH;
@@ -167,8 +163,7 @@ export class ZanoAddressUtils {
         spendPublicKey,
       };
     } catch (error) {
-      console.error('Error decoding address:', error.message);
-      return null;
+      throw new Error(error.message);
     }
   }
 
