@@ -5,6 +5,7 @@ import {
   CRYPTO_HDS_OUT_AMOUNT_MASK,
   CRYPTO_HDS_OUT_CONCEALING_POINT,
 } from './constants';
+import { TransactionObject } from './types';
 import {
   chachaCrypt,
   generateKeyImage,
@@ -128,5 +129,23 @@ export class ZanoTransactionUtils {
     generateKeyDerivation(derivation, txPubKeyBuff, secViewKeyBuff);
     const encrypted: Buffer = chachaCrypt(encryptedPaymentIdBuf, derivation);
     return encrypted.toString('hex');
+  }
+
+  parseObjectInJson(objectInJson: string): TransactionObject | null {
+    try {
+      const decodedData: string = Buffer.from(objectInJson || '', 'base64').toString();
+      const txJson: string = this.prepareJson(decodedData);
+      return JSON.parse(txJson);
+    } catch (error) {
+      console.error('Error parse txJson:', error.message);
+      return null;
+    }
+  }
+
+  private prepareJson(decodedData: string): string {
+    return decodedData
+      .replace(/: ,/g, ': null,')
+      .replace(/: \d+"([^"]*)"/g, (match: string, str: string) => `: "${str}"`)
+      .replace(/: (\d+)/g, ': "$1"');
   }
 }

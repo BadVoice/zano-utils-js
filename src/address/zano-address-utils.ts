@@ -1,6 +1,9 @@
 import crypto from 'crypto';
 
 import {
+  PAYMENT_ID_REGEX,
+  ADDRESS_TAG_PREFIX,
+  ADDRESS_FLAG_PREFIX,
   BUFFER_INTEGRATED_ADDRESS_LENGTH,
   INTEGRATED_ADDRESS_REGEX,
   PAYMENT_ID_LENGTH,
@@ -14,36 +17,76 @@ import {
   VIEW_KEY_LENGTH,
   ADDRESS_REGEX,
 } from './constants';
-import { ZarcanumAddressKeys } from './types';
+import { DecodedAddress , ZarcanumAddressKeys } from './types';
 import { base58Encode, base58Decode } from '../core/base58';
 import { getChecksum } from '../core/crypto';
 
 export class ZanoAddressUtils {
 
   getIntegratedAddress(address: string): string {
+    return this.createIntegratedAddress(address, this.generatePaymentId());
+  }
+
+  createIntegratedAddress(address: string, paymentId: string): string {
+    if (!this.validateAddress(address)) {
+      throw new Error('Invalid address format');
+    }
+
+    if (!this.validatePaymentId(paymentId)) {
+      throw new Error('Invalid payment ID format');
+    }
+
+    try {
+      const paymentIdBuffer: Buffer = Buffer.from(paymentId, 'hex');
+      const addressDecoded: DecodedAddress = this.decodeAddress(address);
+
+      if (!addressDecoded) {
+        return null;
+      }
+
+      return this.formatIntegratedAddress(addressDecoded, paymentIdBuffer);
+    } catch (error) {
+      throw new Error(`Error creating integrated address: ${error.message}`);
+    }
+  }
+
+
+  private formatIntegratedAddress(addressDecoded: DecodedAddress, paymentIdBuffer: Buffer): string {
+    const {
+      tag, flag, viewPublicKey, spendPublicKey,
+    }: DecodedAddress = addressDecoded;
+
+    const integratedAddressBuffer: Buffer = Buffer.concat([
+      Buffer.from([tag, flag]),
+      viewPublicKey,
+      spendPublicKey,
+      paymentIdBuffer,
+    ]);
+
+    const checksum: string = this.calculateChecksum(integratedAddressBuffer);
+    return base58Encode(Buffer.concat([integratedAddressBuffer, Buffer.from(checksum, 'hex')]));
+  }
+
+  private decodeAddress(address: string): DecodedAddress {
     try {
       const decodedAddress: Buffer = base58Decode(address);
+      if(!decodedAddress) {
+        throw new Error('Invalid decode address');
+      }
 
-      const tag: number = INTEGRATED_ADDRESS_TAG_PREFIX;
-      const flag: number = INTEGRATED_ADDRESS_FLAG_PREFIX;
-
-      let offset: number = TAG_LENGTH + FLAG_LENGTH;
+      let offset = TAG_LENGTH + FLAG_LENGTH;
       const viewPublicKey: Buffer = decodedAddress.subarray(offset, offset + VIEW_KEY_LENGTH);
       offset += VIEW_KEY_LENGTH;
       const spendPublicKey: Buffer = decodedAddress.subarray(offset, offset + SPEND_KEY_LENGTH);
-      const paymentId: Buffer = Buffer.from(this.generatePaymentId(), 'hex');
 
-      const integratedAddressBuffer: Buffer = Buffer.concat([
-        Buffer.from([tag, flag]),
+      return {
+        tag: INTEGRATED_ADDRESS_TAG_PREFIX,
+        flag: INTEGRATED_ADDRESS_FLAG_PREFIX,
         viewPublicKey,
         spendPublicKey,
-        paymentId,
-      ]);
-
-      const checksum: string = getChecksum(integratedAddressBuffer);
-      return base58Encode(Buffer.concat([integratedAddressBuffer, Buffer.from(checksum, 'hex')]));
+      };
     } catch (error) {
-      throw new Error(error.message);
+      throw new Error(`Error decode address: ${error.message}`);
     }
   }
 
@@ -68,6 +111,33 @@ export class ZanoAddressUtils {
       const viewKey: Buffer = Buffer.from(viewPublicKey, 'hex');
 
       buf = Buffer.concat([buf, spendKey, viewKey]);
+      const hash: string = getChecksum(buf);
+
+      return base58Encode(Buffer.concat([buf, Buffer.from(hash, 'hex')]));
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  }
+
+  getMasterAddress(spendPublicKey: string, viewPublicKey: string): string {
+    try {
+      const tag: number = ADDRESS_TAG_PREFIX;
+      const flag: number = ADDRESS_FLAG_PREFIX;
+
+      if (spendPublicKey.length !== 64 && !/^([0-9a-fA-F]{2})+$/.test(spendPublicKey)) {
+        throw new Error('Invalid spendPublicKey: must be a hexadecimal string with a length of 64');
+      }
+
+      if (viewPublicKey.length !== 64 && !/^([0-9a-fA-F]{2})+$/.test(viewPublicKey)) {
+        throw new Error('Invalid viewPrivateKey: must be a hexadecimal string with a length of 64');
+      }
+
+      const viewPublicKeyBuf: Buffer = Buffer.from(viewPublicKey, 'hex');
+      const spendPublicKeyBuf: Buffer = Buffer.from(spendPublicKey, 'hex');
+
+      let buf: Buffer = Buffer.from([tag, flag]);
+
+      buf = Buffer.concat([buf, spendPublicKeyBuf, viewPublicKeyBuf]);
       const hash: string = getChecksum(buf);
 
       return base58Encode(Buffer.concat([buf, Buffer.from(hash, 'hex')]));
@@ -128,5 +198,17 @@ export class ZanoAddressUtils {
 
   private generatePaymentId(): string {
     return crypto.randomBytes(PAYMENT_ID_LENGTH).toString('hex');
+  }
+
+  private validatePaymentId(paymentId: string): boolean {
+    return PAYMENT_ID_REGEX.test(paymentId);
+  }
+
+  private validateAddress(address: string): boolean {
+    return INTEGRATED_ADDRESS_REGEX.test(address) || ADDRESS_REGEX.test(address);
+  }
+
+  private calculateChecksum(buffer: Buffer): string {
+    return getChecksum(buffer);
   }
 }
