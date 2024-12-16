@@ -1,8 +1,11 @@
+import { randomBytes } from 'crypto';
+
 import BN from 'bn.js';
 import { curve } from 'elliptic';
 import * as sha3 from 'js-sha3';
 import createKeccakHash from 'keccak';
 import sodium from 'sodium-native';
+
 
 import { chacha8 } from './chacha8';
 import {
@@ -22,6 +25,7 @@ import {
 } from './helpers';
 import RedBN from './interfaces';
 import { serializeVarUint } from './serialize';
+import { SpendKeypair } from '../account/types';
 
 const ADDRESS_CHECKSUM_SIZE = 8;
 const EC_POINT_SIZE: number = sodium.crypto_core_ed25519_BYTES;
@@ -293,4 +297,60 @@ export function chachaCrypt(paymentId: Buffer, derivation: Buffer): Buffer {
   const decryptedBuff: Uint8Array = chacha8(key, iv, paymentId);
 
   return Buffer.from(decryptedBuff);
+}
+
+function keysFromDefault(aPart: Buffer, keysSeedBinarySize: number): SpendKeypair {
+  // aPart == 32 bytes
+  const tmp: Buffer = Buffer.alloc(64).fill(0);
+
+  if (!(tmp.length >= keysSeedBinarySize)) {
+    throw new Error('size mismatch');
+  }
+
+  tmp.set(aPart);
+
+  const hash: Buffer = fastHash(tmp.subarray(0, 32)); // cn_fast_hash(tmp, 32, (char*)&tmp[32]);
+
+  sodium.crypto_core_ed25519_scalar_reduce(hash, tmp); // sc_reduce(tmp);
+
+  const publicKey: Buffer = allocateEd25519Point();
+  const secretKey: Buffer = tmp.subarray(0, 32);
+
+  sodium.crypto_scalarmult_ed25519_base_noclamp(publicKey, secretKey); // ge_scalarmult_base(&point, &sec);
+
+  return {
+    publicSpendKey: Buffer.from(publicKey).toString('hex'),
+    secretSpendKey: Buffer.from(secretKey).toString('hex'),
+  };
+}
+
+export function generateSeedKeys(keysSeedBinarySize: number) {
+  const keysSeedBinary: Buffer = randomBytes(keysSeedBinarySize);
+
+  const {
+    secretSpendKey,
+    publicSpendKey,
+  } = keysFromDefault(keysSeedBinary, keysSeedBinarySize);
+
+  return {
+    secretSpendKey,
+    publicSpendKey,
+    keysSeedBinary: keysSeedBinary.toString('hex'),
+  };
+}
+
+export function dependentKey(secretSpendKey: Buffer): string {
+  if (secretSpendKey.length !== 32) {
+    throw new Error('Invalid secret spend key');
+  }
+  const secretViewKey: Buffer = allocateEd25519Point();
+  hashToScalar(secretViewKey, secretSpendKey);
+  return secretViewKey.toString('hex');
+}
+
+export function secretKeyToPublicKey(secretViewKey: Buffer): string {
+  const s: BN = decodeScalar(secretViewKey, 'Invalid secret key');
+  const basePoint: curve.base.BasePoint = ec.curve.g;
+  const P2: curve.base.BasePoint = basePoint.mul(s);
+  return encodePoint(P2).toString('hex');
 }
