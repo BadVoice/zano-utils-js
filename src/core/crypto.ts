@@ -18,6 +18,7 @@ import {
   ec,
 } from './crypto-data';
 import {
+  reduceScalar,
   encodePoint,
   decodeScalar,
   squareRoot,
@@ -153,7 +154,7 @@ export function derivationToScalar(scalar: Buffer, derivation: Buffer, outIndex:
   return scalar;
 }
 
-function fastHash(data: Buffer): Buffer {
+export function fastHash(data: Buffer): Buffer {
   const hash: Buffer = createKeccakHash('keccak256').update(data).digest();
   return hash;
 }
@@ -173,7 +174,7 @@ export function hs(str32: Buffer, h: Buffer): Buffer {
  * hash_to_scalar
  * https://github.com/hyle-team/zano/blob/2817090c8ac7639d6f697d00fc8bcba2b3681d90/src/crypto/crypto.cpp#L115
  */
-function hashToScalar(scalar: Buffer, data: Buffer): void {
+export function hashToScalar(scalar: Buffer, data: Buffer): void {
   const hash: Buffer = Buffer.concat([fastHash(data), ZERO]);
   sodium.crypto_core_ed25519_scalar_reduce(scalar, hash);
 }
@@ -299,6 +300,10 @@ export function chachaCrypt(paymentId: Buffer, derivation: Buffer): Buffer {
   return Buffer.from(decryptedBuff);
 }
 
+/*
+ * keys_from_default
+ * https://github.com/hyle-team/zano/blob/2817090c8ac7639d6f697d00fc8bcba2b3681d90/src/crypto/crypto.cpp#L88
+ */
 function keysFromDefault(aPart: Buffer, keysSeedBinarySize: number): SpendKeypair {
   // aPart == 32 bytes
   const tmp: Buffer = Buffer.alloc(64).fill(0);
@@ -309,21 +314,31 @@ function keysFromDefault(aPart: Buffer, keysSeedBinarySize: number): SpendKeypai
 
   tmp.set(aPart);
 
-  const hash: Buffer = fastHash(tmp.subarray(0, 32)); // cn_fast_hash(tmp, 32, (char*)&tmp[32]);
+  const hash: Buffer = fastHash(tmp.subarray(0, 32));
+  hash.copy(tmp, 32);
 
-  sodium.crypto_core_ed25519_scalar_reduce(hash, tmp); // sc_reduce(tmp);
+  const scalar: BN = decodeInt(tmp);
 
-  const publicKey: Buffer = allocateEd25519Point();
-  const secretKey: Buffer = tmp.subarray(0, 32);
+  const reducedScalar: BN = reduceScalar(scalar, ec.curve.n);
+  const reducedScalarBuff: Buffer = reducedScalar.toBuffer('le', reducedScalar.byteLength());
 
-  sodium.crypto_scalarmult_ed25519_base_noclamp(publicKey, secretKey); // ge_scalarmult_base(&point, &sec);
+  const basePoint: curve.base.BasePoint = ec.curve.g;
+  const secretKey: Buffer = reducedScalarBuff.subarray(0, 32);
+
+  const s: BN = decodeScalar(secretKey);
+
+  const P2: curve.base.BasePoint = basePoint.mul(s);
 
   return {
-    publicSpendKey: Buffer.from(publicKey).toString('hex'),
+    publicSpendKey: encodePoint(P2).toString('hex'),
     secretSpendKey: Buffer.from(secretKey).toString('hex'),
   };
 }
 
+/*
+ * generate_seed_keys
+ * https://github.com/hyle-team/zano/blob/2817090c8ac7639d6f697d00fc8bcba2b3681d90/src/crypto/crypto.cpp#L108
+ */
 export function generateSeedKeys(keysSeedBinarySize: number) {
   const keysSeedBinary: Buffer = randomBytes(keysSeedBinarySize);
 
@@ -339,6 +354,10 @@ export function generateSeedKeys(keysSeedBinarySize: number) {
   };
 }
 
+/*
+ * dependent_key
+ * https://github.com/hyle-team/zano/blob/2817090c8ac7639d6f697d00fc8bcba2b3681d90/src/crypto/crypto.cpp#L129
+ */
 export function dependentKey(secretSpendKey: Buffer): string {
   if (secretSpendKey.length !== 32) {
     throw new Error('Invalid secret spend key');
@@ -348,6 +367,10 @@ export function dependentKey(secretSpendKey: Buffer): string {
   return secretViewKey.toString('hex');
 }
 
+/*
+ * secret_key_to_public_key
+ * https://github.com/hyle-team/zano/blob/2817090c8ac7639d6f697d00fc8bcba2b3681d90/src/crypto/crypto.cpp#L165
+ */
 export function secretKeyToPublicKey(secretViewKey: Buffer): string {
   const s: BN = decodeScalar(secretViewKey, 'Invalid secret key');
   const basePoint: curve.base.BasePoint = ec.curve.g;

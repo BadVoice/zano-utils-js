@@ -1,5 +1,10 @@
 import { BRAINWALLET_DEFAULT_SEED_SIZE } from './constants';
-import { SpendKeypair , AccountKeys } from './types';
+import {
+  AccountStructure,
+  SpendKeypair,
+  AccountKeys,
+} from './types';
+import { ZanoAddressUtils } from '../address/zano-address-utils';
 import {
   secretKeyToPublicKey,
   dependentKey,
@@ -8,8 +13,35 @@ import {
 
 
 export class ZanoAccountUtils {
+  private addressUtils: ZanoAddressUtils;
 
-  generateAccountKeys(): AccountKeys {
+  constructor() {
+    this.addressUtils = new ZanoAddressUtils();
+  }
+
+  async generateAccount(): Promise<AccountStructure> {
+    const keys: AccountKeys = await this.generateAccountKeys();
+
+    if (!keys || !keys.secretSpendKey || !keys.publicSpendKey || !keys.secretViewKey || !keys.publicViewKey) {
+      throw new Error('Invalid generated keys');
+    }
+
+    const address: string = this.addressUtils.getMasterAddress(keys.publicSpendKey, keys.publicViewKey);
+
+    try {
+      await this.addressUtils.addressValidate(address, keys.publicSpendKey, keys.publicViewKey, keys.secretSpendKey, keys.secretViewKey);
+    } catch (error) {
+      console.error('Error validating address:', error);
+      throw error.message;
+    }
+
+    return {
+      address,
+      ...keys,
+    };
+  }
+
+  async generateAccountKeys(): Promise<AccountKeys> {
     const {
       secretSpendKey,
       publicSpendKey,
@@ -28,7 +60,6 @@ export class ZanoAccountUtils {
 
     const secretViewKeyBuf: Buffer = Buffer.from(secretViewKey, 'hex');
     const publicViewKey: string = secretKeyToPublicKey(secretViewKeyBuf);
-
 
     return {
       secretSpendKey,

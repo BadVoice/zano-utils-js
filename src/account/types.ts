@@ -9,3 +9,7 @@ export type SpendKeypair = {
   secretSpendKey: string;
   publicSpendKey: string;
 }
+
+export type AccountStructure = AccountKeys & {
+  address: string;
+}

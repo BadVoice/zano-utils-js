@@ -9,3 +9,5 @@ export type DecodedAddress = {
     viewPublicKey: Buffer;
     spendPublicKey: Buffer;
 }
+
+export type AddressValidateResult = string | true;
