@@ -1,8 +1,11 @@
+import { randomBytes } from 'crypto';
+
 import BN from 'bn.js';
 import { curve } from 'elliptic';
 import * as sha3 from 'js-sha3';
 import createKeccakHash from 'keccak';
 import sodium from 'sodium-native';
+
 
 import { chacha8 } from './chacha8';
 import {
@@ -15,6 +18,7 @@ import {
   ec,
 } from './crypto-data';
 import {
+  reduceScalar,
   encodePoint,
   decodeScalar,
   squareRoot,
@@ -22,6 +26,7 @@ import {
 } from './helpers';
 import RedBN from './interfaces';
 import { serializeVarUint } from './serialize';
+import { SpendKeypair } from '../account/types';
 
 const ADDRESS_CHECKSUM_SIZE = 8;
 const EC_POINT_SIZE: number = sodium.crypto_core_ed25519_BYTES;
@@ -149,7 +154,7 @@ export function derivationToScalar(scalar: Buffer, derivation: Buffer, outIndex:
   return scalar;
 }
 
-function fastHash(data: Buffer): Buffer {
+export function fastHash(data: Buffer): Buffer {
   const hash: Buffer = createKeccakHash('keccak256').update(data).digest();
   return hash;
 }
@@ -169,7 +174,7 @@ export function hs(str32: Buffer, h: Buffer): Buffer {
  * hash_to_scalar
  * https://github.com/hyle-team/zano/blob/2817090c8ac7639d6f697d00fc8bcba2b3681d90/src/crypto/crypto.cpp#L115
  */
-function hashToScalar(scalar: Buffer, data: Buffer): void {
+export function hashToScalar(scalar: Buffer, data: Buffer): void {
   const hash: Buffer = Buffer.concat([fastHash(data), ZERO]);
   sodium.crypto_core_ed25519_scalar_reduce(scalar, hash);
 }
@@ -293,4 +298,82 @@ export function chachaCrypt(paymentId: Buffer, derivation: Buffer): Buffer {
   const decryptedBuff: Uint8Array = chacha8(key, iv, paymentId);
 
   return Buffer.from(decryptedBuff);
+}
+
+/*
+ * keys_from_default
+ * https://github.com/hyle-team/zano/blob/2817090c8ac7639d6f697d00fc8bcba2b3681d90/src/crypto/crypto.cpp#L88
+ */
+function keysFromDefault(aPart: Buffer, keysSeedBinarySize: number): SpendKeypair {
+  // aPart == 32 bytes
+  const tmp: Buffer = Buffer.alloc(64).fill(0);
+
+  if (!(tmp.length >= keysSeedBinarySize)) {
+    throw new Error('size mismatch');
+  }
+
+  tmp.set(aPart);
+
+  const hash: Buffer = fastHash(tmp.subarray(0, 32));
+  hash.copy(tmp, 32);
+
+  const scalar: BN = decodeInt(tmp);
+
+  const reducedScalar: BN = reduceScalar(scalar, ec.curve.n);
+  const reducedScalarBuff: Buffer = reducedScalar.toBuffer('le', reducedScalar.byteLength());
+
+  const basePoint: curve.base.BasePoint = ec.curve.g;
+  const secretKey: Buffer = reducedScalarBuff.subarray(0, 32);
+
+  const s: BN = decodeScalar(secretKey);
+
+  const P2: curve.base.BasePoint = basePoint.mul(s);
+
+  return {
+    publicSpendKey: encodePoint(P2).toString('hex'),
+    secretSpendKey: Buffer.from(secretKey).toString('hex'),
+  };
+}
+
+/*
+ * generate_seed_keys
+ * https://github.com/hyle-team/zano/blob/2817090c8ac7639d6f697d00fc8bcba2b3681d90/src/crypto/crypto.cpp#L108
+ */
+export function generateSeedKeys(keysSeedBinarySize: number) {
+  const keysSeedBinary: Buffer = randomBytes(keysSeedBinarySize);
+
+  const {
+    secretSpendKey,
+    publicSpendKey,
+  } = keysFromDefault(keysSeedBinary, keysSeedBinarySize);
+
+  return {
+    secretSpendKey,
+    publicSpendKey,
+    keysSeedBinary: keysSeedBinary.toString('hex'),
+  };
+}
+
+/*
+ * dependent_key
+ * https://github.com/hyle-team/zano/blob/2817090c8ac7639d6f697d00fc8bcba2b3681d90/src/crypto/crypto.cpp#L129
+ */
+export function dependentKey(secretSpendKey: Buffer): string {
+  if (secretSpendKey.length !== 32) {
+    throw new Error('Invalid secret spend key');
+  }
+  const secretViewKey: Buffer = allocateEd25519Point();
+  hashToScalar(secretViewKey, secretSpendKey);
+  return secretViewKey.toString('hex');
+}
+
+/*
+ * secret_key_to_public_key
+ * https://github.com/hyle-team/zano/blob/2817090c8ac7639d6f697d00fc8bcba2b3681d90/src/crypto/crypto.cpp#L165
+ */
+export function secretKeyToPublicKey(secretViewKey: Buffer): string {
+  const s: BN = decodeScalar(secretViewKey, 'Invalid secret key');
+  const basePoint: curve.base.BasePoint = ec.curve.g;
+  const P2: curve.base.BasePoint = basePoint.mul(s);
+  return encodePoint(P2).toString('hex');
 }

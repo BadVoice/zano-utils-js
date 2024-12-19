@@ -123,3 +123,68 @@ describe('getIntegratedAddress', () => {
     expect(addressFromMaster2.slice(0, -SUFFIX_LENGTH)).toBe(master2BasedIntegratedAddressWithoutSuffix);
   });
 });
+
+describe('address validation', () => {
+  let service: ZanoAddressUtils;
+  const address = 'ZxDFpn4k7xVYyc9VZ3LphrJbkpc46xfREace5bme1aXiMzKPAHA8jsTWcHSXhv9AdodSaoGXK9Mg7bk3ec4FkQrj357fZPWZX';
+  const secretSpendKey = '80b3e96a3eb765332b0fd3e44e0fefa58747a70025bf91aa4a7b758ab6f5590d';
+  const publicSpendKey = 'b3eee2376f32bf2bfb5cf9c023f569380c84ac8c64ddc8f7c109730dc8e97d7a';
+  const secretViewKey = '3e75ffee51eb21b1d6404ddcab5b3aaa49edbfe225e9a893d87074aacae46b09';
+  const publicViewKey = 'fa9c2811c53eb1044490e931f92ad9ddf317220df08ccfb5b83eccfdbd38f135';
+
+  const secretSpendKey2 = '9ed57f071db00695b18ea396d0f85ce18178b35643c038f09255edc326c4a502';
+  const publicSpendKey2 = 'd651f305d40bcbe27ced0ef48253623ec31da3a28130d08ddf6686179e418ff4';
+  const publicViewKey2 = '2b3e2bac27a3992b3f93285b1d08476a5723afdf3aa6961770ad7e7544325831';
+
+  beforeEach(() => {
+    service = new ZanoAddressUtils();
+  });
+
+  it('created address should be valid', async () => {
+    await expect(service.addressValidate(address, publicSpendKey, publicViewKey, secretSpendKey, secretViewKey))
+      .resolves
+      .toBe(true);
+  });
+
+  it('created address non valid', async () => {
+    await expect(service.addressValidate('', '', '', '', ''))
+      .rejects
+      .toThrow('invalid address format');
+  });
+
+  it('address on invalid privateKey', async () => {
+    await expect(service.addressValidate(address, '', '', '', ''))
+      .rejects
+      .toThrow('invalid address keys');
+  });
+
+  it('address on invalid publicKey', async () => {
+    await expect(service.addressValidate(address, publicSpendKey, publicViewKey, secretSpendKey2, secretViewKey))
+      .rejects
+      .toThrow('invalid depend secret view key');
+  });
+
+  it('address on invalid publicSpendKey', async () => {
+    await expect(service.addressValidate(address, publicSpendKey2, publicViewKey, secretSpendKey, secretViewKey))
+      .rejects
+      .toThrow('invalid address keys');
+  });
+
+  it('address on invalid secret view key', async () => {
+    await expect(service.addressValidate(address, publicSpendKey2, publicViewKey, secretSpendKey, ''))
+      .rejects
+      .toThrow('invalid address keys');
+  });
+
+  it('address on invalid depend secret view key', async () => {
+    await expect(service.addressValidate(address, publicSpendKey, publicViewKey, secretSpendKey, ''))
+      .rejects
+      .toThrow('invalid depend secret view key');
+  });
+
+  it('address on invalid publicViewKey', async () => {
+    await expect(service.addressValidate(address, publicSpendKey, publicViewKey2, secretSpendKey, secretViewKey))
+      .rejects
+      .toThrow('pub view key from secret key no equal provided pub view key');
+  });
+});
