@@ -125,7 +125,7 @@ describe('getIntegratedAddress', () => {
 });
 
 describe(
-  'testing the correctness of the address decoding function splitIntegratedAddress',
+  'testing the correctness of the address decoding in function splitIntegratedAddress',
   () => {
     const zanoAddressUtils: ZanoAddressUtils = new ZanoAddressUtils();
     const integratedAddress = 'iZ2kFmwxRHoaRxm1ni8HnfUTkYuKbni8s4CE2Z4GgFfH99BJ6cnbAtJTgUnZjPj9CTCTKy1qqM9wPCTp92uBC7e47JPoHxGL5UU2D1tpQMg4';
