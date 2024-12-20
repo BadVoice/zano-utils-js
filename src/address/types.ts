@@ -9,3 +9,8 @@ export type DecodedAddress = {
     viewPublicKey: Buffer;
     spendPublicKey: Buffer;
 }
+
+export type DecodedIntegratedAddress = {
+    masterAddress: string;
+    paymentId: string;
+}

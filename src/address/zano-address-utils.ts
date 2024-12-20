@@ -16,8 +16,13 @@ import {
   TAG_LENGTH,
   VIEW_KEY_LENGTH,
   ADDRESS_REGEX,
+  MASTER_ADDRESS,
 } from './constants';
-import { DecodedAddress , ZarcanumAddressKeys } from './types';
+import {
+  DecodedAddress,
+  DecodedIntegratedAddress,
+  ZarcanumAddressKeys,
+} from './types';
 import { base58Encode, base58Decode } from '../core/base58';
 import { getChecksum } from '../core/crypto';
 
@@ -39,11 +44,10 @@ export class ZanoAddressUtils {
     try {
       const paymentIdBuffer: Buffer = Buffer.from(paymentId, 'hex');
       const addressDecoded: DecodedAddress = this.decodeAddress(address);
-
       if (!addressDecoded) {
         return null;
       }
-
+      // console.log('teeeeessssssssssssstt', this.formatIntegratedAddress(addressDecoded, paymentIdBuffer));
       return this.formatIntegratedAddress(addressDecoded, paymentIdBuffer);
     } catch (error) {
       throw new Error(`Error creating integrated address: ${error.message}`);
@@ -100,12 +104,12 @@ export class ZanoAddressUtils {
       }
       let buf: Buffer = Buffer.from([tag, flag]);
 
-      if (spendPublicKey.length !== 64 && !/^([0-9a-fA-F]{2})+$/.test(spendPublicKey)) {
+      if (spendPublicKey.length !== 64 && !MASTER_ADDRESS.test(spendPublicKey)) {
         throw new Error('Invalid spendPublicKey: must be a hexadecimal string with a length of 64');
       }
       const spendKey: Buffer = Buffer.from(spendPublicKey, 'hex');
 
-      if (viewPublicKey.length !== 64 && !/^([0-9a-fA-F]{2})+$/.test(viewPublicKey)) {
+      if (viewPublicKey.length !== 64 && !MASTER_ADDRESS.test(viewPublicKey)) {
         throw new Error('Invalid viewPrivateKey: must be a hexadecimal string with a length of 64');
       }
       const viewKey: Buffer = Buffer.from(viewPublicKey, 'hex');
@@ -124,11 +128,11 @@ export class ZanoAddressUtils {
       const tag: number = ADDRESS_TAG_PREFIX;
       const flag: number = ADDRESS_FLAG_PREFIX;
 
-      if (spendPublicKey.length !== 64 && !/^([0-9a-fA-F]{2})+$/.test(spendPublicKey)) {
+      if (spendPublicKey.length !== 64 && !MASTER_ADDRESS.test(spendPublicKey)) {
         throw new Error('Invalid spendPublicKey: must be a hexadecimal string with a length of 64');
       }
 
-      if (viewPublicKey.length !== 64 && !/^([0-9a-fA-F]{2})+$/.test(viewPublicKey)) {
+      if (viewPublicKey.length !== 64 && !MASTER_ADDRESS.test(viewPublicKey)) {
         throw new Error('Invalid viewPrivateKey: must be a hexadecimal string with a length of 64');
       }
 
@@ -145,6 +149,27 @@ export class ZanoAddressUtils {
       throw new Error(error.message);
     }
   }
+
+  splitIntegratedAddress(integratedAddress: string): DecodedIntegratedAddress {
+    try {
+      if (!INTEGRATED_ADDRESS_REGEX.test(integratedAddress)) {
+        throw new Error('Invalid integratedAddress: must be a hexadecimal string with a length of 106 whit correct regex');
+      }
+
+      const decodedIntegratedAddress: ZarcanumAddressKeys = this.getKeysFromAddress(integratedAddress);
+
+      const paymentId: string = base58Decode(integratedAddress).subarray(66, 66 + PAYMENT_ID_LENGTH).toString('hex');
+      const masterAddress: string = this.getMasterAddress(decodedIntegratedAddress.spendPublicKey, decodedIntegratedAddress.viewPublicKey);
+
+      return {
+        masterAddress,
+        paymentId,
+      };
+    } catch (error) {
+      throw new Error(`Error decode integrated address: ${error.message}`);
+    }
+  }
+
 
   /*
    * Retrieves public spend and view keys from the Zano address.
