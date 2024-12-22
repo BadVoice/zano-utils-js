@@ -16,8 +16,15 @@ import {
   TAG_LENGTH,
   VIEW_KEY_LENGTH,
   ADDRESS_REGEX,
+  MASTER_ADDRESS_REGEX,
 } from './constants';
-import { DecodedAddress , ZarcanumAddressKeys } from './types';
+
+import {
+  DecodedAddress,
+  SplitedIntegratedAddress,
+  ZarcanumAddressKeys,
+} from './types';
+
 import { base58Encode, base58Decode } from '../core/base58';
 import { getChecksum } from '../core/crypto';
 
@@ -39,7 +46,6 @@ export class ZanoAddressUtils {
     try {
       const paymentIdBuffer: Buffer = Buffer.from(paymentId, 'hex');
       const addressDecoded: DecodedAddress = this.decodeAddress(address);
-
       if (!addressDecoded) {
         return null;
       }
@@ -53,7 +59,10 @@ export class ZanoAddressUtils {
 
   private formatIntegratedAddress(addressDecoded: DecodedAddress, paymentIdBuffer: Buffer): string {
     const {
-      tag, flag, viewPublicKey, spendPublicKey,
+      tag,
+      flag,
+      viewPublicKey,
+      spendPublicKey,
     }: DecodedAddress = addressDecoded;
 
     const integratedAddressBuffer: Buffer = Buffer.concat([
@@ -70,7 +79,7 @@ export class ZanoAddressUtils {
   private decodeAddress(address: string): DecodedAddress {
     try {
       const decodedAddress: Buffer = base58Decode(address);
-      if(!decodedAddress) {
+      if (!decodedAddress) {
         throw new Error('Invalid decode address');
       }
 
@@ -100,12 +109,12 @@ export class ZanoAddressUtils {
       }
       let buf: Buffer = Buffer.from([tag, flag]);
 
-      if (spendPublicKey.length !== 64 && !/^([0-9a-fA-F]{2})+$/.test(spendPublicKey)) {
+      if (spendPublicKey.length !== 64 && !MASTER_ADDRESS_REGEX.test(spendPublicKey)) {
         throw new Error('Invalid spendPublicKey: must be a hexadecimal string with a length of 64');
       }
       const spendKey: Buffer = Buffer.from(spendPublicKey, 'hex');
 
-      if (viewPublicKey.length !== 64 && !/^([0-9a-fA-F]{2})+$/.test(viewPublicKey)) {
+      if (viewPublicKey.length !== 64 && !MASTER_ADDRESS_REGEX.test(viewPublicKey)) {
         throw new Error('Invalid viewPrivateKey: must be a hexadecimal string with a length of 64');
       }
       const viewKey: Buffer = Buffer.from(viewPublicKey, 'hex');
@@ -124,11 +133,11 @@ export class ZanoAddressUtils {
       const tag: number = ADDRESS_TAG_PREFIX;
       const flag: number = ADDRESS_FLAG_PREFIX;
 
-      if (spendPublicKey.length !== 64 && !/^([0-9a-fA-F]{2})+$/.test(spendPublicKey)) {
+      if (spendPublicKey.length !== 64 && !MASTER_ADDRESS_REGEX.test(spendPublicKey)) {
         throw new Error('Invalid spendPublicKey: must be a hexadecimal string with a length of 64');
       }
 
-      if (viewPublicKey.length !== 64 && !/^([0-9a-fA-F]{2})+$/.test(viewPublicKey)) {
+      if (viewPublicKey.length !== 64 && !MASTER_ADDRESS_REGEX.test(viewPublicKey)) {
         throw new Error('Invalid viewPrivateKey: must be a hexadecimal string with a length of 64');
       }
 
@@ -145,6 +154,32 @@ export class ZanoAddressUtils {
       throw new Error(error.message);
     }
   }
+
+  splitIntegratedAddress(integratedAddress: string): SplitedIntegratedAddress {
+    try {
+      if (!INTEGRATED_ADDRESS_REGEX.test(integratedAddress)) {
+        throw new Error('Invalid integratedAddress: must be a hexadecimal string with a length of 106 whit correct regex');
+      }
+
+      const { spendPublicKey, viewPublicKey }: ZarcanumAddressKeys = this.getKeysFromAddress(integratedAddress);
+
+      if (!spendPublicKey || !viewPublicKey) {
+        throw new Error('spendPublicKey or viewPublicKey are missing');
+      }
+
+      const paymentId: string = base58Decode(integratedAddress).subarray(66, 66 + PAYMENT_ID_LENGTH).toString('hex');
+      const masterAddress: string = this.getMasterAddress(spendPublicKey, viewPublicKey);
+
+      return {
+        masterAddress,
+        paymentId,
+      };
+
+    } catch (error) {
+      throw new Error(`Error decode integrated address: ${error.message}`);
+    }
+  }
+
 
   /*
    * Retrieves public spend and view keys from the Zano address.
@@ -189,11 +224,14 @@ export class ZanoAddressUtils {
     ).toString('hex');
 
     if (!spendPublicKey || spendPublicKey.length !== SPEND_KEY_LENGTH * 2 ||
-        !viewPublicKey || viewPublicKey.length !== VIEW_KEY_LENGTH * 2) {
+      !viewPublicKey || viewPublicKey.length !== VIEW_KEY_LENGTH * 2) {
       throw new Error('Invalid key format in the address.');
     }
 
-    return { spendPublicKey, viewPublicKey };
+    return {
+      spendPublicKey,
+      viewPublicKey,
+    };
   }
 
   private generatePaymentId(): string {

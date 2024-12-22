@@ -26,13 +26,13 @@
     "axios": "^0.21.1",
     "base58": "^2.0.1",
     "big.js": "^6.1.1",
+    "bn.js": "^4.12.0",
+    "buffer": "^6.0.3",
+    "elliptic": "^6.5.4",
     "js-sha3": "^0.9.3",
     "keccak": "^3.0.3",
     "rimraf": "^3.0.2",
-    "sodium-native": "^4.0.0",
-    "bn.js": "^4.12.0",
-    "buffer": "^6.0.3",
-    "elliptic": "^6.5.4"
+    "sodium-native": "^4.0.0"
   },
   "devDependencies": {
     "@types/big.js": "^6",
