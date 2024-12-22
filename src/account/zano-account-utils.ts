@@ -1,9 +1,12 @@
 import { BRAINWALLET_DEFAULT_SEED_SIZE } from './constants';
 import {
+  AddressValidateResult,
   AccountStructure,
   SpendKeypair,
   AccountKeys,
 } from './types';
+import { ADDRESS_REGEX } from '../address/constants';
+import { ZarcanumAddressKeys } from '../address/types';
 import { ZanoAddressUtils } from '../address/zano-address-utils';
 import {
   secretKeyToPublicKey,
@@ -29,7 +32,7 @@ export class ZanoAccountUtils {
     const address: string = this.addressUtils.getMasterAddress(keys.publicSpendKey, keys.publicViewKey);
 
     try {
-      await this.addressUtils.addressValidate(address, keys.publicSpendKey, keys.publicViewKey, keys.secretSpendKey, keys.secretViewKey);
+      await this.accountValidate(address, keys.publicSpendKey, keys.publicViewKey, keys.secretSpendKey, keys.secretViewKey);
     } catch (error) {
       console.error('Error validating address:', error);
       throw error.message;
@@ -39,6 +42,47 @@ export class ZanoAccountUtils {
       address,
       ...keys,
     };
+  }
+
+  async accountValidate(
+    address: string,
+    publicSpendKey: string,
+    publicViewKey: string,
+    secretSpendKey: string,
+    secretViewKey: string,
+  ): Promise<AddressValidateResult> {
+
+    if (!ADDRESS_REGEX.test(address)) {
+      throw new Error('invalid address format') ;
+    }
+
+    const { spendPublicKey }: ZarcanumAddressKeys = this.addressUtils.getKeysFromAddress(address);
+
+    if (spendPublicKey !== publicSpendKey) {
+      throw new Error('invalid address keys');
+    }
+
+    const secretSpendKeyBuf: Buffer = Buffer.from(secretSpendKey, 'hex');
+    const secViewKey: string = dependentKey(secretSpendKeyBuf);
+
+    if (secViewKey !== secretViewKey) {
+      throw new Error('invalid depend secret view key');
+    }
+
+    const secretViewKeyBuf: Buffer = Buffer.from(secretViewKey, 'hex');
+    const pubViewKey: string = secretKeyToPublicKey(secretViewKeyBuf);
+
+    if (pubViewKey !== publicViewKey) {
+      throw new Error('pub view key from secret key no equal provided pub view key');
+    }
+
+    const pubSpendKey: string = secretKeyToPublicKey(secretSpendKeyBuf);
+
+    if (pubSpendKey !== pubSpendKey) {
+      throw new Error( 'pub spend key from secret key no equal provided pub spend key');
+    }
+
+    return true;
   }
 
   async generateAccountKeys(): Promise<AccountKeys> {

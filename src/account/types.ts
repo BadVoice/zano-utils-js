@@ -13,3 +13,5 @@ export type SpendKeypair = {
 export type AccountStructure = AccountKeys & {
   address: string;
 }
+
+export type AddressValidateResult = string | true;

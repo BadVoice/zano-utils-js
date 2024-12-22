@@ -17,17 +17,9 @@ import {
   VIEW_KEY_LENGTH,
   ADDRESS_REGEX,
 } from './constants';
-import {
-  AddressValidateResult,
-  DecodedAddress,
-  ZarcanumAddressKeys,
-} from './types';
+import { DecodedAddress, ZarcanumAddressKeys } from './types';
 import { base58Encode, base58Decode } from '../core/base58';
-import {
-  dependentKey,
-  secretKeyToPublicKey,
-  getChecksum,
-} from '../core/crypto';
+import { getChecksum } from '../core/crypto';
 
 export class ZanoAddressUtils {
 
@@ -208,48 +200,6 @@ export class ZanoAddressUtils {
       spendPublicKey,
       viewPublicKey,
     };
-  }
-
-  async addressValidate(
-    address: string,
-    publicSpendKey: string,
-    publicViewKey: string,
-    secretSpendKey: string,
-    secretViewKey: string,
-  ): Promise<AddressValidateResult> {
-    const pubKey: string = publicSpendKey.replace(/^0x/, '');
-
-    if (!ADDRESS_REGEX.test(address)) {
-      throw new Error('invalid address format') ;
-    }
-
-    const { spendPublicKey }: ZarcanumAddressKeys = this.getKeysFromAddress(address);
-
-    if (spendPublicKey !== pubKey) {
-      throw new Error('invalid address keys');
-    }
-
-    const secretSpendKeyBuf: Buffer = Buffer.from(secretSpendKey, 'hex');
-    const secViewKey: string = dependentKey(secretSpendKeyBuf);
-
-    if (secViewKey !== secretViewKey) {
-      throw new Error('invalid depend secret view key');
-    }
-
-    const secretViewKeyBuf: Buffer = Buffer.from(secretViewKey, 'hex');
-    const pubViewKey: string = secretKeyToPublicKey(secretViewKeyBuf);
-
-    if (pubViewKey !== publicViewKey) {
-      throw new Error('pub view key from secret key no equal provided pub view key');
-    }
-
-    const pubSpendKey: string = secretKeyToPublicKey(secretSpendKeyBuf);
-
-    if (pubSpendKey !== pubSpendKey) {
-      throw new Error( 'pub spend key from secret key no equal provided pub spend key');
-    }
-
-    return true;
   }
 
   private generatePaymentId(): string {
