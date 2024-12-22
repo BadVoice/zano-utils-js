@@ -10,7 +10,7 @@ export type DecodedAddress = {
     spendPublicKey: Buffer;
 }
 
-export type DecodedIntegratedAddress = {
+export type SplitedIntegratedAddress = {
     masterAddress: string;
     paymentId: string;
 }

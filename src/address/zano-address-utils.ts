@@ -20,7 +20,7 @@ import {
 } from './constants';
 import {
   DecodedAddress,
-  DecodedIntegratedAddress,
+  SplitedIntegratedAddress,
   ZarcanumAddressKeys,
 } from './types';
 import { base58Encode, base58Decode } from '../core/base58';
@@ -150,21 +150,26 @@ export class ZanoAddressUtils {
     }
   }
 
-  splitIntegratedAddress(integratedAddress: string): DecodedIntegratedAddress {
+  splitIntegratedAddress(integratedAddress: string): SplitedIntegratedAddress {
     try {
       if (!INTEGRATED_ADDRESS_REGEX.test(integratedAddress)) {
         throw new Error('Invalid integratedAddress: must be a hexadecimal string with a length of 106 whit correct regex');
       }
 
-      const decodedIntegratedAddress: ZarcanumAddressKeys = this.getKeysFromAddress(integratedAddress);
+      const { spendPublicKey, viewPublicKey }: ZarcanumAddressKeys = this.getKeysFromAddress(integratedAddress);
+
+      if (!spendPublicKey || !viewPublicKey) {
+        throw new Error('spendPublicKey or viewPublicKey are missing');
+      }
 
       const paymentId: string = base58Decode(integratedAddress).subarray(66, 66 + PAYMENT_ID_LENGTH).toString('hex');
-      const masterAddress: string = this.getMasterAddress(decodedIntegratedAddress.spendPublicKey, decodedIntegratedAddress.viewPublicKey);
+      const masterAddress: string = this.getMasterAddress(spendPublicKey, viewPublicKey);
 
       return {
         masterAddress,
         paymentId,
       };
+
     } catch (error) {
       throw new Error(`Error decode integrated address: ${error.message}`);
     }
