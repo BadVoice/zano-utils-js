@@ -18,11 +18,13 @@ import {
   ADDRESS_REGEX,
   MASTER_ADDRESS_REGEX,
 } from './constants';
+
 import {
   DecodedAddress,
   SplitedIntegratedAddress,
   ZarcanumAddressKeys,
 } from './types';
+
 import { base58Encode, base58Decode } from '../core/base58';
 import { getChecksum } from '../core/crypto';
 
@@ -57,7 +59,10 @@ export class ZanoAddressUtils {
 
   private formatIntegratedAddress(addressDecoded: DecodedAddress, paymentIdBuffer: Buffer): string {
     const {
-      tag, flag, viewPublicKey, spendPublicKey,
+      tag,
+      flag,
+      viewPublicKey,
+      spendPublicKey,
     }: DecodedAddress = addressDecoded;
 
     const integratedAddressBuffer: Buffer = Buffer.concat([
@@ -74,7 +79,7 @@ export class ZanoAddressUtils {
   private decodeAddress(address: string): DecodedAddress {
     try {
       const decodedAddress: Buffer = base58Decode(address);
-      if(!decodedAddress) {
+      if (!decodedAddress) {
         throw new Error('Invalid decode address');
       }
 
@@ -219,11 +224,14 @@ export class ZanoAddressUtils {
     ).toString('hex');
 
     if (!spendPublicKey || spendPublicKey.length !== SPEND_KEY_LENGTH * 2 ||
-        !viewPublicKey || viewPublicKey.length !== VIEW_KEY_LENGTH * 2) {
+      !viewPublicKey || viewPublicKey.length !== VIEW_KEY_LENGTH * 2) {
       throw new Error('Invalid key format in the address.');
     }
 
-    return { spendPublicKey, viewPublicKey };
+    return {
+      spendPublicKey,
+      viewPublicKey,
+    };
   }
 
   private generatePaymentId(): string {

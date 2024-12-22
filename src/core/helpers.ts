@@ -41,3 +41,7 @@ export function decodeScalar(buf: Buffer, message = 'Invalid scalar'): BN {
 export function encodePoint(P: curve.base.BasePoint): Buffer {
   return Buffer.from(ec.encodePoint(P));
 }
+
+export function reduceScalar(scalar: BN, curveOrder: BN): BN {
+  return scalar.mod(curveOrder);
+}
