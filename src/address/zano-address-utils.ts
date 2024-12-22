@@ -16,7 +16,7 @@ import {
   TAG_LENGTH,
   VIEW_KEY_LENGTH,
   ADDRESS_REGEX,
-  MASTER_ADDRESS_REGEX,
+  ACCOUNT_KEY_REGEX,
 } from './constants';
 import {
   DecodedAddress,
@@ -104,12 +104,12 @@ export class ZanoAddressUtils {
       }
       let buf: Buffer = Buffer.from([tag, flag]);
 
-      if (spendPublicKey.length !== 64 && !MASTER_ADDRESS_REGEX.test(spendPublicKey)) {
+      if (spendPublicKey.length !== 64 && !ACCOUNT_KEY_REGEX.test(spendPublicKey)) {
         throw new Error('Invalid spendPublicKey: must be a hexadecimal string with a length of 64');
       }
       const spendKey: Buffer = Buffer.from(spendPublicKey, 'hex');
 
-      if (viewPublicKey.length !== 64 && !MASTER_ADDRESS_REGEX.test(viewPublicKey)) {
+      if (viewPublicKey.length !== 64 && !ACCOUNT_KEY_REGEX.test(viewPublicKey)) {
         throw new Error('Invalid viewPrivateKey: must be a hexadecimal string with a length of 64');
       }
       const viewKey: Buffer = Buffer.from(viewPublicKey, 'hex');
@@ -128,11 +128,11 @@ export class ZanoAddressUtils {
       const tag: number = ADDRESS_TAG_PREFIX;
       const flag: number = ADDRESS_FLAG_PREFIX;
 
-      if (spendPublicKey.length !== 64 && !MASTER_ADDRESS_REGEX.test(spendPublicKey)) {
+      if (spendPublicKey.length !== 64 && !ACCOUNT_KEY_REGEX.test(spendPublicKey)) {
         throw new Error('Invalid spendPublicKey: must be a hexadecimal string with a length of 64');
       }
 
-      if (viewPublicKey.length !== 64 && !MASTER_ADDRESS_REGEX.test(viewPublicKey)) {
+      if (viewPublicKey.length !== 64 && !ACCOUNT_KEY_REGEX.test(viewPublicKey)) {
         throw new Error('Invalid viewPrivateKey: must be a hexadecimal string with a length of 64');
       }
 

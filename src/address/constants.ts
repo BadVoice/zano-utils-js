@@ -20,4 +20,4 @@ export const BUFFER_INTEGRATED_ADDRESS_LENGTH =
   BUFFER_ADDRESS_LENGTH +
   PAYMENT_ID_LENGTH;
 export const PAYMENT_ID_REGEX = /^[a-fA-F0-9]{16}$/;
-export const MASTER_ADDRESS_REGEX = /^([0-9a-fA-F]{2})+$/;
+export const ACCOUNT_KEY_REGEX = /^([0-9a-fA-F]{2})+$/;
