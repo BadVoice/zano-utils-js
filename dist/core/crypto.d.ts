@@ -18,7 +18,7 @@ export declare function hs(str32: Buffer, h: Buffer): Buffer;
 export declare function hashToScalar(scalar: Buffer, data: Buffer): void;
 export declare function allocateEd25519Scalar(): Buffer;
 export declare function allocateEd25519Point(): Buffer;
-export declare function generateKeyImage(pub: Buffer, sec: Buffer): Buffer;
+export declare function calculateKeyImage(pub: Buffer, sec: Buffer): Buffer;
 export declare function hashToEc(ephemeralPubKey: Buffer): curve.base.BasePoint;
 export declare function hashToPoint(hash: Buffer): curve.edwards.EdwardsPoint;
 export declare function generateChaCha8Key(pass: Buffer): Buffer;
