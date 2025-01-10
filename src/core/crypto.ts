@@ -304,7 +304,7 @@ export function chachaCrypt(paymentId: Buffer, derivation: Buffer): Buffer {
  * keys_from_default
  * https://github.com/hyle-team/zano/blob/2817090c8ac7639d6f697d00fc8bcba2b3681d90/src/crypto/crypto.cpp#L88
  */
-function keysFromDefault(aPart: Buffer, keysSeedBinarySize: number): SpendKeypair {
+export function keysFromDefault(aPart: Buffer, keysSeedBinarySize: number): SpendKeypair {
   // aPart == 32 bytes
   const tmp: Buffer = Buffer.alloc(64).fill(0);
 
@@ -319,8 +319,9 @@ function keysFromDefault(aPart: Buffer, keysSeedBinarySize: number): SpendKeypai
 
   const scalar: BN = decodeInt(tmp);
 
+  const reducedScalarBuff: Buffer = Buffer.alloc(32);
   const reducedScalar: BN = reduceScalar(scalar, ec.curve.n);
-  const reducedScalarBuff: Buffer = reducedScalar.toBuffer('le', reducedScalar.byteLength());
+  reducedScalar.toBuffer('le', 32).copy(reducedScalarBuff);
 
   const basePoint: curve.base.BasePoint = ec.curve.g;
   const secretKey: Buffer = reducedScalarBuff.subarray(0, 32);
@@ -339,7 +340,7 @@ function keysFromDefault(aPart: Buffer, keysSeedBinarySize: number): SpendKeypai
  * generate_seed_keys
  * https://github.com/hyle-team/zano/blob/2817090c8ac7639d6f697d00fc8bcba2b3681d90/src/crypto/crypto.cpp#L108
  */
-export function generateSeedKeys(keysSeedBinarySize: number) {
+export function generateSeedKeys(keysSeedBinarySize: number): SpendKeypair {
   const keysSeedBinary: Buffer = randomBytes(keysSeedBinarySize);
 
   const {
@@ -350,7 +351,6 @@ export function generateSeedKeys(keysSeedBinarySize: number) {
   return {
     secretSpendKey,
     publicSpendKey,
-    keysSeedBinary: keysSeedBinary.toString('hex'),
   };
 }
 
