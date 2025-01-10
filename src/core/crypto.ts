@@ -191,7 +191,7 @@ export function allocateEd25519Point(): Buffer {
  * generate_key_image
  * https://github.com/hyle-team/zano/blob/2817090c8ac7639d6f697d00fc8bcba2b3681d90/src/crypto/crypto.cpp#L296
  */
-export function generateKeyImage(pub: Buffer, sec: Buffer): Buffer {
+export function calculateKeyImage(pub: Buffer, sec: Buffer): Buffer {
   const s: BN = decodeScalar(sec, 'Invalid secret key');
   const P1: curve.base.BasePoint = hashToEc(pub);
   const P2: curve.base.BasePoint = P1.mul(s);
