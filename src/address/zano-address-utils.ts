@@ -18,13 +18,11 @@ import {
   ADDRESS_REGEX,
   ACCOUNT_KEY_REGEX,
 } from './constants';
-
 import {
   DecodedAddress,
   SplitedIntegratedAddress,
   ZarcanumAddressKeys,
 } from './types';
-
 import { base58Encode, base58Decode } from '../core/base58';
 import { getChecksum } from '../core/crypto';
 

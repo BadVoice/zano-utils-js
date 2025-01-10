@@ -1,1 +1,3 @@
 export const BRAINWALLET_DEFAULT_SEED_SIZE = 32;
+export const SEED_PHRASE_V1_WORDS_COUNT = 25;
+export const SEED_PHRASE_V2_WORDS_COUNT = 26;

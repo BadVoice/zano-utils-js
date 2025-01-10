@@ -23,6 +23,7 @@
     "lint": "eslint \"{src,apps,lib,test}/**/*.ts\" --fix"
   },
   "dependencies": {
+    "@badvoice/zano-utils-js": "^0.1.5",
     "axios": "^0.21.1",
     "base58": "^2.0.1",
     "big.js": "^6.1.1",
@@ -32,6 +33,7 @@
     "js-sha3": "^0.9.3",
     "keccak": "^3.0.3",
     "rimraf": "^3.0.2",
+    "sodium-javascript": "^0.8.0",
     "sodium-native": "^4.0.0"
   },
   "devDependencies": {

@@ -4,7 +4,7 @@ import BN from 'bn.js';
 import { curve } from 'elliptic';
 import * as sha3 from 'js-sha3';
 import createKeccakHash from 'keccak';
-import sodium from 'sodium-native';
+import sodium from 'sodium-javascript';
 
 
 import { chacha8 } from './chacha8';

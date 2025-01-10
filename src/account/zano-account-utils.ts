@@ -1,4 +1,8 @@
-import { BRAINWALLET_DEFAULT_SEED_SIZE } from './constants';
+import {
+  SEED_PHRASE_V2_WORDS_COUNT,
+  SEED_PHRASE_V1_WORDS_COUNT,
+  BRAINWALLET_DEFAULT_SEED_SIZE,
+} from './constants';
 import {
   AddressValidateResult,
   AccountStructure,
@@ -9,10 +13,17 @@ import { ADDRESS_REGEX } from '../address/constants';
 import { ZarcanumAddressKeys } from '../address/types';
 import { ZanoAddressUtils } from '../address/zano-address-utils';
 import {
+  keysFromDefault,
   secretKeyToPublicKey,
   dependentKey,
   generateSeedKeys,
 } from '../core/crypto';
+import {
+  numByWord,
+  getTimestampFromWord,
+  text2binaryThrow,
+} from '../core/mnemonic-encoding';
+import { checkSeedChecksum , cryptWithPassInPlace } from '../currency_core/account';
 
 
 export class ZanoAccountUtils {
@@ -79,7 +90,7 @@ export class ZanoAccountUtils {
     const pubSpendKey: string = secretKeyToPublicKey(secretSpendKeyBuf);
 
     if (pubSpendKey !== pubSpendKey) {
-      throw new Error( 'pub spend key from secret key no equal provided pub spend key');
+      throw new Error('pub spend key from secret key no equal provided pub spend key');
     }
 
     return true;
@@ -111,5 +122,79 @@ export class ZanoAccountUtils {
       secretViewKey,
       publicViewKey,
     };
+  }
+
+  async restoreSeedPhrase(seedPhrase: string, seedPassword?: string): Promise<SpendKeypair> {
+    const words = seedPhrase.trim().split(/\s+/);
+    let keysSeedText: string;
+    let timestampWord: string | undefined;
+    let auditableFlagAndChecksumWord: string | undefined;
+
+    if (words.length === SEED_PHRASE_V1_WORDS_COUNT) {
+      timestampWord = words.pop();
+    } else if (words.length === SEED_PHRASE_V2_WORDS_COUNT) {
+      auditableFlagAndChecksumWord = words.pop();
+      timestampWord = words.pop();
+    } else {
+      throw new Error(`Invalid seed words count: ${words.length}`);
+    }
+
+    keysSeedText = words.join(' ');
+
+    let creationTimestamp: number;
+    let hasPassword = false;
+    try {
+      const {
+        timestamp,
+        passwordUsed,
+      } = getTimestampFromWord(timestampWord);
+      if (timestamp && passwordUsed) {
+        creationTimestamp = timestamp;
+        hasPassword = passwordUsed;
+      }
+    } catch (e) {
+      throw new Error('Invalid timestamp word or password');
+    }
+
+    if (hasPassword && !seedPassword) {
+      throw new Error('Password required but not provided');
+    }
+
+    let auditableFlagAndChecksum: number;
+    if (auditableFlagAndChecksumWord) {
+      try {
+        auditableFlagAndChecksum = numByWord(auditableFlagAndChecksumWord);
+      } catch (error) {
+        throw new Error('Invalid auditable flag');
+      }
+    }
+
+    console.log('dsgdsg');
+
+    try {
+      const keysSeedBinary = text2binaryThrow(keysSeedText);
+
+      if (hasPassword && seedPassword) {
+        cryptWithPassInPlace(keysSeedBinary, seedPassword);
+      }
+
+      if(auditableFlagAndChecksum != Number.MAX_SAFE_INTEGER) {
+        console.log('dsgdsg');
+        checkSeedChecksum(auditableFlagAndChecksum, keysSeedBinary, seedPassword, creationTimestamp);
+      }
+
+      const spendKeypair: SpendKeypair = keysFromDefault(Buffer.from(keysSeedBinary), 32);
+      if (!spendKeypair) {
+        throw new Error('Key restoration failed');
+      }
+
+      return spendKeypair;
+    } catch (e: any) {
+      if (e.message === 'text2binary failed') {
+        throw new Error('Invalid seed phrase format');
+      } else {
+        throw new Error('Key derivation failed: ' + e.message);
+      }
+    }
   }
 }
