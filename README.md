@@ -26,21 +26,19 @@ to obtain accurate testing data for your functions.
 ### Importing the Library
 
 ```typescript
-import { ZanoAddressUtils, ZanoTransactionUtils } from '@badvoice/zano-utils-js';
+import { getIntegratedAddress, getNativeBlindedAsset } from '@badvoice/zano-utils-js';
 ```
 
-### Usage address utils instance
+### Usage address utils functions
 
 ```typescript
-const addressUtils: ZanoAddressUtils = new ZanoAddressUtils();
-const getIntegratedAddress: string = addressUtils.getIntegratedAddress('ZxD5aoLDPTdcaRx4uCpyW4XiLfEXejepAVz8cSY2fwHNEiJNu6NmpBBDLGTJzCsUvn3acCVDVDPMV8yQXdPooAp338Se7AxeH');
+const integratedAddress: string = getIntegratedAddress('ZxD5aoLDPTdcaRx4uCpyW4XiLfEXejepAVz8cSY2fwHNEiJNu6NmpBBDLGTJzCsUvn3acCVDVDPMV8yQXdPooAp338Se7AxeH');
 ```
 
-### Usage transaction utils instance
+### Usage transaction utils functions
 
 ```typescript
-const transactionUtils: ZanoTransactionUtils = new ZanoTransactionUtils();
-const getBlindedAsset: string = transactionUtils.getNativeBlindedAsset('secViewKey', 'txPubKey', 1);
+const getBlindedAsset: string = getNativeBlindedAsset('secViewKey', 'txPubKey', 1);
 ```
 
 ## For develop
@@ -55,7 +53,9 @@ const getBlindedAsset: string = transactionUtils.getNativeBlindedAsset('secViewK
 
 To run the code with `ts-node`:
 
-```ts-node src/file.ts```
+```ts-node src/file.ts```   
+
+```yarn test```
 
 ### Running Tests
 

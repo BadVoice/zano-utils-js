@@ -26,7 +26,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.secretKeyToPublicKey = exports.dependentKey = exports.generateSeedKeys = exports.keysFromDefault = exports.chachaCrypt = exports.generateChaCha8Key = exports.hashToPoint = exports.hashToEc = exports.generateKeyImage = exports.allocateEd25519Point = exports.allocateEd25519Scalar = exports.hashToScalar = exports.hs = exports.fastHash = exports.derivationToScalar = exports.deriveSecretKey = exports.derivePublicKey = exports.generateKeyDerivation = exports.calculateBlindedAssetId = exports.calculateConcealingPoint = exports.getDerivationToScalar = exports.getChecksum = exports.HASH_SIZE = exports.SCALAR_1DIV8 = exports.EIGHT = void 0;
+exports.secretKeyToPublicKey = exports.dependentKey = exports.generateSeedKeys = exports.keysFromDefault = exports.chachaCrypt = exports.generateChaCha8Key = exports.hashToPoint = exports.hashToEc = exports.calculateKeyImage = exports.allocateEd25519Point = exports.allocateEd25519Scalar = exports.hashToScalar = exports.hs = exports.fastHash = exports.derivationToScalar = exports.deriveSecretKey = exports.derivePublicKey = exports.generateKeyDerivation = exports.calculateBlindedAssetId = exports.calculateConcealingPoint = exports.getDerivationToScalar = exports.getChecksum = exports.HASH_SIZE = exports.SCALAR_1DIV8 = exports.EIGHT = void 0;
 const crypto_1 = require("crypto");
 const bn_js_1 = __importDefault(require("bn.js"));
 const sha3 = __importStar(require("js-sha3"));
@@ -134,13 +134,13 @@ function allocateEd25519Point() {
     return Buffer.alloc(EC_POINT_SIZE);
 }
 exports.allocateEd25519Point = allocateEd25519Point;
-function generateKeyImage(pub, sec) {
+function calculateKeyImage(pub, sec) {
     const s = (0, helpers_1.decodeScalar)(sec, 'Invalid secret key');
     const P1 = hashToEc(pub);
     const P2 = P1.mul(s);
     return (0, helpers_1.encodePoint)(P2);
 }
-exports.generateKeyImage = generateKeyImage;
+exports.calculateKeyImage = calculateKeyImage;
 function hashToEc(ephemeralPubKey) {
     const hash = fastHash(ephemeralPubKey);
     const P = hashToPoint(hash);
