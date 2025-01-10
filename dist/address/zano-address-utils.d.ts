@@ -1,15 +1,7 @@
 import { SplitedIntegratedAddress, ZarcanumAddressKeys } from './types';
-export declare class ZanoAddressUtils {
-    getIntegratedAddress(address: string): string;
-    createIntegratedAddress(address: string, paymentId: string): string;
-    private formatIntegratedAddress;
-    private decodeAddress;
-    encodeAddress(tag: number, flag: number, spendPublicKey: string, viewPublicKey: string): string;
-    getMasterAddress(spendPublicKey: string, viewPublicKey: string): string;
-    splitIntegratedAddress(integratedAddress: string): SplitedIntegratedAddress;
-    getKeysFromAddress(address: string): ZarcanumAddressKeys;
-    private generatePaymentId;
-    private validatePaymentId;
-    private validateAddress;
-    private calculateChecksum;
-}
+declare function getIntegratedAddress(address: string): string;
+declare function encodeAddress(tag: number, flag: number, spendPublicKey: string, viewPublicKey: string): string;
+declare function getMasterAddress(spendPublicKey: string, viewPublicKey: string): string;
+declare function splitIntegratedAddress(integratedAddress: string): SplitedIntegratedAddress;
+declare function getKeysFromAddress(address: string): ZarcanumAddressKeys;
+export { getIntegratedAddress, encodeAddress, getMasterAddress, splitIntegratedAddress, getKeysFromAddress, };
