@@ -3,7 +3,7 @@ import { Buffer } from 'buffer';
 import BN from 'bn.js';
 import { curve } from 'elliptic';
 
-import { ec } from './crypto-data';
+import { ec, sqrtm1 } from './crypto-data';
 import RedBN from './interfaces';
 
 /*
@@ -44,4 +44,43 @@ export function encodePoint(P: curve.base.BasePoint): Buffer {
 
 export function reduceScalar(scalar: BN, curveOrder: BN): BN {
   return scalar.mod(curveOrder);
+}
+
+export function decodePoint(buf: Buffer, message = 'Invalid point'): curve.edwards.EdwardsPoint {
+  // compress data if curve isOdd
+  const xIsOdd: boolean = (buf[buf.length - 1] & 0x80) !== 0;
+  buf[buf.length - 1] = buf[buf.length - 1] & ~0x80;
+
+  let y: RedBN = decodeInt(buf) as RedBN;
+  if (y.gte(ec.curve.p)) {
+    throw new RangeError(message);
+  }
+  y = y.toRed(ec.curve.red);
+  // x^2 = (y^2 - c^2) / (c^2 d y^2 - a) = u / v
+  const y2: RedBN = y.redSqr();
+  const u: RedBN = y2.redSub(ec.curve.c2 as RedBN);
+  const v: RedBN = y2.redMul(ec.curve.d as RedBN).redMul(ec.curve.c2 as RedBN).redSub(ec.curve.a as RedBN);
+
+  let x: RedBN = squareRoot(u, v);
+
+  if (!u.redSub(x.redSqr().redMul(v)).isZero()) {
+    x = x.redMul(sqrtm1);
+    if (!u.redSub(x.redSqr().redMul(v)).isZero()) {
+      throw new RangeError(message);
+    }
+  }
+
+  if (x.fromRed().isZero() && xIsOdd) {
+    throw new RangeError(message);
+  }
+
+  if (x.fromRed().isOdd() !== xIsOdd) {
+    x = x.redNeg();
+  }
+
+  return ec.curve.point(x, y);
+}
+
+export function encodeInt(num: BN) {
+  return num.toArrayLike(Buffer, 'le', 32);
 }

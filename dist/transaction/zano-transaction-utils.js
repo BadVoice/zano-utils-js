@@ -22,10 +22,8 @@ function getStealthAddress(txPubKey, secViewKey, pubSpendKey, outIndex) {
     const txPubKeyBuf = Buffer.from(txPubKey, 'hex');
     const secViewKeyBuf = Buffer.from(secViewKey, 'hex');
     const pubSpendKeyBuf = Buffer.from(pubSpendKey, 'hex');
-    const derivation = (0, crypto_1.allocateEd25519Point)();
-    (0, crypto_1.generateKeyDerivation)(derivation, txPubKeyBuf, secViewKeyBuf);
-    const ephemeralPubKey = (0, crypto_1.allocateEd25519Point)();
-    const stealth = (0, crypto_1.derivePublicKey)(ephemeralPubKey, derivation, outIndex, pubSpendKeyBuf);
+    const derivation = (0, crypto_1.generateKeyDerivation)(txPubKeyBuf, secViewKeyBuf);
+    const stealth = (0, crypto_1.derivePublicKey)(derivation, outIndex, pubSpendKeyBuf);
     return stealth.toString('hex');
 }
 exports.getStealthAddress = getStealthAddress;
@@ -41,12 +39,9 @@ function generateKeyImage(txPubKey, secViewKey, pubSpendKey, outIndex, spendSecr
     const secViewKeyBuf = Buffer.from(secViewKey, 'hex');
     const pubSpendKeyBuf = Buffer.from(pubSpendKey, 'hex');
     const secSpendKeyBuf = Buffer.from(spendSecretKey, 'hex');
-    const derivation = (0, crypto_1.allocateEd25519Point)();
-    (0, crypto_1.generateKeyDerivation)(derivation, txPubKeyBuf, secViewKeyBuf);
-    const ephemeralPubKey = (0, crypto_1.allocateEd25519Point)();
-    const ephemeralSecKey = (0, crypto_1.allocateEd25519Point)();
-    const secret = (0, crypto_1.deriveSecretKey)(ephemeralSecKey, derivation, outIndex, secSpendKeyBuf);
-    const stealthAddress = (0, crypto_1.derivePublicKey)(ephemeralPubKey, derivation, outIndex, pubSpendKeyBuf);
+    const derivation = (0, crypto_1.generateKeyDerivation)(txPubKeyBuf, secViewKeyBuf);
+    const secret = (0, crypto_1.deriveSecretKey)(derivation, outIndex, secSpendKeyBuf);
+    const stealthAddress = (0, crypto_1.derivePublicKey)(derivation, outIndex, pubSpendKeyBuf);
     const keyImage = (0, crypto_1.calculateKeyImage)(stealthAddress, secret);
     return keyImage.toString('hex');
 }
@@ -55,8 +50,7 @@ function decryptPaymentId(encryptedPaymentId, txPubKey, secViewKey) {
     const encryptedPaymentIdBuf = Buffer.from(encryptedPaymentId, 'hex');
     const txPubKeyBuff = Buffer.from(txPubKey, 'hex');
     const secViewKeyBuff = Buffer.from(secViewKey, 'hex');
-    const derivation = (0, crypto_1.allocateEd25519Point)();
-    (0, crypto_1.generateKeyDerivation)(derivation, txPubKeyBuff, secViewKeyBuff);
+    const derivation = (0, crypto_1.generateKeyDerivation)(txPubKeyBuff, secViewKeyBuff);
     const encrypted = (0, crypto_1.chachaCrypt)(encryptedPaymentIdBuf, derivation);
     return encrypted.toString('hex');
 }
