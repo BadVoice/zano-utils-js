@@ -1,6 +1,6 @@
 {
   "name": "@badvoice/zano-utils-js",
-  "version": "0.3.6",
+  "version": "0.3.7",
   "repository": "git@github.com:BadVoice/Zano-utils-js.git",
   "author": "BadVoice <https://t.me/GermanSmurov>",
   "main": "dist/index.js",

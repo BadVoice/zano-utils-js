@@ -10,7 +10,7 @@ export declare function calculateConcealingPoint(Hs: Buffer, pubViewKeyBuff: Buf
 export declare function calculateBlindedAssetId(Hs: Buffer, assetId: Buffer, X: Buffer): Buffer;
 export declare function generateKeyDerivation(txPubKey: Buffer, secKeyView: Buffer): Buffer;
 export declare function derivePublicKey(derivation: Buffer, outIndex: number, pubSpendKeyBuf: Buffer): Buffer;
-export declare function deriveSecretKey(derivation: Buffer, outIndex: number, secSpendKeyBuf: Buffer): Buffer;
+export declare function deriveSecretKey(derivation: Buffer, outIndex: number, sec: Buffer): Buffer;
 export declare function derivationToScalar(derivation: Buffer, outIndex: number): Buffer;
 export declare function fastHash(data: Buffer): Buffer;
 export declare function hs(str32: Buffer, h: Buffer): Buffer;

@@ -126,7 +126,7 @@ function decryptPaymentId(encryptedPaymentId: string, txPubKey: string, secViewK
 function parseObjectInJson(objectInJson: string): TransactionObject | null {
   try {
     const decodedData: string = Buffer.from(objectInJson || '', 'base64').toString();
-    const txJson: string = this.prepareJson(decodedData);
+    const txJson: string = prepareJson(decodedData);
     return JSON.parse(txJson);
   } catch (error) {
     console.error('Error parse txJson:', error.message);

@@ -58,7 +58,7 @@ exports.decryptPaymentId = decryptPaymentId;
 function parseObjectInJson(objectInJson) {
     try {
         const decodedData = Buffer.from(objectInJson || '', 'base64').toString();
-        const txJson = this.prepareJson(decodedData);
+        const txJson = prepareJson(decodedData);
         return JSON.parse(txJson);
     }
     catch (error) {
