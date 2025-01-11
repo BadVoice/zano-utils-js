@@ -123,20 +123,13 @@ export function derivePublicKey(
  * derive_secret_key
  * https://github.com/hyle-team/zano/blob/2817090c8ac7639d6f697d00fc8bcba2b3681d90/src/crypto/crypto.cpp#L227
  */
-export function deriveSecretKey(
-  derivation: Buffer,
-  outIndex: number,
-  secSpendKeyBuf: Buffer): Buffer {
-  const Hs: Buffer = derivationToScalar(derivation, outIndex); // Hs = Hs(8 * r * V, i)
-  const hsScalar: BN = decodeScalar(Hs, 'Invalid HS scalar');
-  const sScalar: BN = decodeScalar(secSpendKeyBuf, 'Invalid secret key');
-
-  const n: BN = ec.curve.n;
-
-  // x = (Hs + s) mod n
-  const x: BN = hsScalar.add(sScalar).mod(n);
-
-  return encodeInt(x);
+export function deriveSecretKey(derivation: Buffer, outIndex: number, sec: Buffer): Buffer {
+  const s: BN = decodeScalar(sec, 'Invalid secret key');
+  const scalar: Buffer = derivationToScalar(derivation, outIndex);
+  const key: BN = s
+    .add(decodeInt(scalar))
+    .umod(ec.curve.n);
+  return encodeInt(key);
 }
 
 /*
