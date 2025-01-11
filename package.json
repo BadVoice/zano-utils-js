@@ -1,6 +1,6 @@
 {
   "name": "@badvoice/zano-utils-js",
-  "version": "0.2.6",
+  "version": "0.3.6",
   "repository": "git@github.com:BadVoice/Zano-utils-js.git",
   "author": "BadVoice <https://t.me/GermanSmurov>",
   "main": "dist/index.js",
@@ -31,8 +31,7 @@
     "elliptic": "^6.5.4",
     "js-sha3": "^0.9.3",
     "keccak": "^3.0.3",
-    "rimraf": "^3.0.2",
-    "sodium-native": "^4.0.0"
+    "rimraf": "^3.0.2"
   },
   "devDependencies": {
     "@types/big.js": "^6",
