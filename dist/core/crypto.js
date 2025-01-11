@@ -26,21 +26,16 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.secretKeyToPublicKey = exports.dependentKey = exports.generateSeedKeys = exports.keysFromDefault = exports.chachaCrypt = exports.generateChaCha8Key = exports.hashToPoint = exports.hashToEc = exports.calculateKeyImage = exports.allocateEd25519Point = exports.allocateEd25519Scalar = exports.hashToScalar = exports.hs = exports.fastHash = exports.derivationToScalar = exports.deriveSecretKey = exports.derivePublicKey = exports.generateKeyDerivation = exports.calculateBlindedAssetId = exports.calculateConcealingPoint = exports.getDerivationToScalar = exports.getChecksum = exports.HASH_SIZE = exports.SCALAR_1DIV8 = exports.EIGHT = void 0;
+exports.secretKeyToPublicKey = exports.dependentKey = exports.generateSeedKeys = exports.keysFromDefault = exports.chachaCrypt = exports.generateChaCha8Key = exports.hashToPoint = exports.hashToEc = exports.calculateKeyImage = exports.reduceScalar32 = exports.hashToScalar = exports.hs = exports.fastHash = exports.derivationToScalar = exports.deriveSecretKey = exports.derivePublicKey = exports.generateKeyDerivation = exports.calculateBlindedAssetId = exports.calculateConcealingPoint = exports.getDerivationToScalar = exports.getChecksum = exports.HASH_SIZE = exports.SCALAR_1DIV8 = void 0;
 const crypto_1 = require("crypto");
 const bn_js_1 = __importDefault(require("bn.js"));
 const sha3 = __importStar(require("js-sha3"));
 const keccak_1 = __importDefault(require("keccak"));
-const sodium_native_1 = __importDefault(require("sodium-native"));
 const chacha8_1 = require("./chacha8");
 const crypto_data_1 = require("./crypto-data");
 const helpers_1 = require("./helpers");
 const serialize_1 = require("./serialize");
 const ADDRESS_CHECKSUM_SIZE = 8;
-const EC_POINT_SIZE = sodium_native_1.default.crypto_core_ed25519_BYTES;
-const EC_SCALAR_SIZE = sodium_native_1.default.crypto_core_ed25519_SCALARBYTES;
-const ZERO = allocateEd25519Scalar();
-exports.EIGHT = allocateEd25519Scalar().fill(8, 0, 1);
 exports.SCALAR_1DIV8 = (() => {
     const scalar = Buffer.alloc(32);
     scalar.writeBigUInt64LE(BigInt('0x6106e529e2dc2f79'), 0);
@@ -57,55 +52,59 @@ exports.getChecksum = getChecksum;
 function getDerivationToScalar(txPubKey, secViewKey, outIndex) {
     const txPubKeyBuf = Buffer.from(txPubKey, 'hex');
     const secViewKeyBuf = Buffer.from(secViewKey, 'hex');
-    const sharedSecret = allocateEd25519Point();
-    generateKeyDerivation(sharedSecret, txPubKeyBuf, secViewKeyBuf);
-    const allocatedScalar = allocateEd25519Scalar();
-    return derivationToScalar(allocatedScalar, sharedSecret, outIndex);
+    const sharedSecret = generateKeyDerivation(txPubKeyBuf, secViewKeyBuf);
+    return derivationToScalar(sharedSecret, outIndex);
 }
 exports.getDerivationToScalar = getDerivationToScalar;
 function calculateConcealingPoint(Hs, pubViewKeyBuff) {
-    const concealingPoint = allocateEd25519Point();
-    sodium_native_1.default.crypto_scalarmult_ed25519_noclamp(concealingPoint, Hs, pubViewKeyBuff);
-    return concealingPoint;
+    const scalar = (0, helpers_1.decodeScalar)(Hs, 'Invalid sсalar');
+    const P = (0, helpers_1.decodePoint)(pubViewKeyBuff, 'Invalid public key');
+    const P2 = P.mul(scalar);
+    return (0, helpers_1.encodePoint)(P2);
 }
 exports.calculateConcealingPoint = calculateConcealingPoint;
 function calculateBlindedAssetId(Hs, assetId, X) {
-    const sX = allocateEd25519Point();
-    sodium_native_1.default.crypto_scalarmult_ed25519_noclamp(sX, Hs, X);
-    const pointT = allocateEd25519Point();
-    sodium_native_1.default.crypto_core_ed25519_add(pointT, assetId, sX);
-    const blindedAssetId = allocateEd25519Point();
-    sodium_native_1.default.crypto_scalarmult_ed25519_noclamp(blindedAssetId, exports.SCALAR_1DIV8, pointT);
-    return blindedAssetId;
+    const hsScalar = (0, helpers_1.decodeScalar)(Hs, 'Invalid sсalar');
+    const xP = (0, helpers_1.decodePoint)(X, 'Invalid public key');
+    const sX = xP.mul(hsScalar);
+    const scalar1div8 = (0, helpers_1.decodeScalar)(exports.SCALAR_1DIV8, 'Invalid sсalar');
+    const assetIdPoint = (0, helpers_1.decodePoint)(assetId, 'Invalid asset ID');
+    const pointT = assetIdPoint.add(sX);
+    const blindedAssetIdPoint = pointT.mul(scalar1div8);
+    return (0, helpers_1.encodePoint)(blindedAssetIdPoint);
 }
 exports.calculateBlindedAssetId = calculateBlindedAssetId;
-function generateKeyDerivation(derivation, txPubKey, secKeyView) {
-    sodium_native_1.default.crypto_scalarmult_ed25519_noclamp(derivation, secKeyView, txPubKey);
-    sodium_native_1.default.crypto_scalarmult_ed25519_noclamp(derivation, exports.EIGHT, derivation);
+function generateKeyDerivation(txPubKey, secKeyView) {
+    const s = (0, helpers_1.decodeScalar)(secKeyView, 'Invalid secret key');
+    const P = (0, helpers_1.decodePoint)(txPubKey, 'Invalid public key');
+    const P2 = P.mul(s);
+    const P3 = P2.mul(new bn_js_1.default('8'));
+    return (0, helpers_1.encodePoint)(P3);
 }
 exports.generateKeyDerivation = generateKeyDerivation;
-function derivePublicKey(pointG, derivation, outIndex, pubSpendKeyBuf) {
-    const Hs = derivationToScalar(pointG, derivation, outIndex);
-    sodium_native_1.default.crypto_scalarmult_ed25519_base_noclamp(pointG, Hs);
-    const P = allocateEd25519Point();
-    sodium_native_1.default.crypto_core_ed25519_add(P, pubSpendKeyBuf, pointG);
-    return P;
+function derivePublicKey(derivation, outIndex, pubSpendKeyBuf) {
+    const P1 = (0, helpers_1.decodePoint)(pubSpendKeyBuf, 'Invalid public key');
+    const scalar = derivationToScalar(derivation, outIndex);
+    const P = crypto_data_1.ec.curve.g.mul((0, helpers_1.decodeInt)(scalar));
+    const P2 = P.add(P1);
+    return (0, helpers_1.encodePoint)(P2);
 }
 exports.derivePublicKey = derivePublicKey;
-function deriveSecretKey(pointG, derivation, outIndex, secSpendKeyBuf) {
-    const Hs = derivationToScalar(pointG, derivation, outIndex);
-    const x = allocateEd25519Point();
-    sodium_native_1.default.crypto_core_ed25519_scalar_add(x, Hs, secSpendKeyBuf);
-    return x;
+function deriveSecretKey(derivation, outIndex, secSpendKeyBuf) {
+    const Hs = derivationToScalar(derivation, outIndex);
+    const hsScalar = (0, helpers_1.decodeScalar)(Hs, 'Invalid HS scalar');
+    const sScalar = (0, helpers_1.decodeScalar)(secSpendKeyBuf, 'Invalid secret key');
+    const n = crypto_data_1.ec.curve.n;
+    const x = hsScalar.add(sScalar).mod(n);
+    return (0, helpers_1.encodeInt)(x);
 }
 exports.deriveSecretKey = deriveSecretKey;
-function derivationToScalar(scalar, derivation, outIndex) {
+function derivationToScalar(derivation, outIndex) {
     const data = Buffer.concat([
         derivation,
         (0, serialize_1.serializeVarUint)(outIndex),
     ]);
-    hashToScalar(scalar, data);
-    return scalar;
+    return hashToScalar(data);
 }
 exports.derivationToScalar = derivationToScalar;
 function fastHash(data) {
@@ -115,25 +114,20 @@ function fastHash(data) {
 exports.fastHash = fastHash;
 function hs(str32, h) {
     const elements = [str32, h];
-    const hashScalar = allocateEd25519Scalar();
     const data = Buffer.concat(elements);
-    hashToScalar(hashScalar, data);
-    return hashScalar;
+    return hashToScalar(data);
 }
 exports.hs = hs;
-function hashToScalar(scalar, data) {
-    const hash = Buffer.concat([fastHash(data), ZERO]);
-    sodium_native_1.default.crypto_core_ed25519_scalar_reduce(scalar, hash);
+function hashToScalar(data) {
+    const hash = fastHash(data);
+    return reduceScalar32(hash);
 }
 exports.hashToScalar = hashToScalar;
-function allocateEd25519Scalar() {
-    return Buffer.alloc(EC_SCALAR_SIZE);
+function reduceScalar32(scalar) {
+    const num = (0, helpers_1.decodeInt)(scalar);
+    return (0, helpers_1.encodeInt)(num.umod(crypto_data_1.ec.curve.n));
 }
-exports.allocateEd25519Scalar = allocateEd25519Scalar;
-function allocateEd25519Point() {
-    return Buffer.alloc(EC_POINT_SIZE);
-}
-exports.allocateEd25519Point = allocateEd25519Point;
+exports.reduceScalar32 = reduceScalar32;
 function calculateKeyImage(pub, sec) {
     const s = (0, helpers_1.decodeScalar)(sec, 'Invalid secret key');
     const P1 = hashToEc(pub);
@@ -250,8 +244,7 @@ function dependentKey(secretSpendKey) {
     if (secretSpendKey.length !== 32) {
         throw new Error('Invalid secret spend key');
     }
-    const secretViewKey = allocateEd25519Point();
-    hashToScalar(secretViewKey, secretSpendKey);
+    const secretViewKey = hashToScalar(secretSpendKey);
     return secretViewKey.toString('hex');
 }
 exports.dependentKey = dependentKey;

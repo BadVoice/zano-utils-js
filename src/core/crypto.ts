@@ -4,7 +4,6 @@ import BN from 'bn.js';
 import { curve } from 'elliptic';
 import * as sha3 from 'js-sha3';
 import createKeccakHash from 'keccak';
-import sodium from 'sodium-native';
 
 
 import { chacha8 } from './chacha8';
@@ -18,6 +17,8 @@ import {
   ec,
 } from './crypto-data';
 import {
+  encodeInt,
+  decodePoint,
   reduceScalar,
   encodePoint,
   decodeScalar,
@@ -29,10 +30,6 @@ import { serializeVarUint } from './serialize';
 import { SpendKeypair } from '../account/types';
 
 const ADDRESS_CHECKSUM_SIZE = 8;
-const EC_POINT_SIZE: number = sodium.crypto_core_ed25519_BYTES;
-const EC_SCALAR_SIZE: number = sodium.crypto_core_ed25519_SCALARBYTES;
-const ZERO: Buffer = allocateEd25519Scalar();
-export const EIGHT: Buffer = allocateEd25519Scalar().fill(8, 0, 1);
 export const SCALAR_1DIV8: Buffer = (() => {
   const scalar: Buffer = Buffer.alloc(32);
 
@@ -53,11 +50,9 @@ export function getDerivationToScalar(txPubKey: string, secViewKey: string, outI
   const txPubKeyBuf: Buffer = Buffer.from(txPubKey, 'hex');
   const secViewKeyBuf: Buffer = Buffer.from(secViewKey, 'hex');
 
-  const sharedSecret: Buffer = allocateEd25519Point();
-  generateKeyDerivation(sharedSecret, txPubKeyBuf, secViewKeyBuf);
+  const sharedSecret: Buffer = generateKeyDerivation(txPubKeyBuf, secViewKeyBuf);
 
-  const allocatedScalar: Buffer = allocateEd25519Scalar();
-  return derivationToScalar(allocatedScalar, sharedSecret, outIndex);
+  return derivationToScalar(sharedSecret, outIndex);
 }
 
 /*
@@ -65,9 +60,10 @@ export function getDerivationToScalar(txPubKey: string, secViewKey: string, outI
   * https://github.com/hyle-team/zano/blob/2817090c8ac7639d6f697d00fc8bcba2b3681d90/src/currency_core/currency_format_utils.cpp#L1270
  */
 export function calculateConcealingPoint(Hs: Buffer, pubViewKeyBuff: Buffer): Buffer {
-  const concealingPoint = allocateEd25519Point();
-  sodium.crypto_scalarmult_ed25519_noclamp(concealingPoint, Hs, pubViewKeyBuff);
-  return concealingPoint;
+  const scalar: BN = decodeScalar(Hs, 'Invalid sсalar');
+  const P: curve.edwards.EdwardsPoint = decodePoint(pubViewKeyBuff, 'Invalid public key');
+  const P2: curve.base.BasePoint = P.mul(scalar);
+  return encodePoint(P2);
 }
 
 /*
@@ -75,29 +71,31 @@ export function calculateConcealingPoint(Hs: Buffer, pubViewKeyBuff: Buffer): Bu
   * https://github.com/hyle-team/zano/blob/2817090c8ac7639d6f697d00fc8bcba2b3681d90/src/currency_core/currency_format_utils.cpp#L3289
  */
 export function calculateBlindedAssetId(Hs: Buffer, assetId: Buffer, X: Buffer): Buffer {
-  const sX: Buffer = allocateEd25519Point();
-  sodium.crypto_scalarmult_ed25519_noclamp(sX, Hs, X);
+  const hsScalar: BN = decodeScalar(Hs, 'Invalid sсalar');
+  const xP: curve.edwards.EdwardsPoint = decodePoint(X, 'Invalid public key');
+  const sX: curve.base.BasePoint = xP.mul(hsScalar);
 
-  const pointT: Buffer = allocateEd25519Point();
-  sodium.crypto_core_ed25519_add(pointT, assetId, sX);
+  const scalar1div8: BN = decodeScalar(SCALAR_1DIV8, 'Invalid sсalar');
+  const assetIdPoint: curve.edwards.EdwardsPoint = decodePoint(assetId, 'Invalid asset ID');
 
-  const blindedAssetId: Buffer = allocateEd25519Point();
-  sodium.crypto_scalarmult_ed25519_noclamp(blindedAssetId, SCALAR_1DIV8, pointT);
+  const pointT: curve.base.BasePoint = assetIdPoint.add(sX);
 
-  return blindedAssetId;
+  const blindedAssetIdPoint: curve.base.BasePoint = pointT.mul(scalar1div8);
+
+  return encodePoint(blindedAssetIdPoint);
 }
 
 /*
   * generate_key_derivation
   * https://github.com/hyle-team/zano/blob/2817090c8ac7639d6f697d00fc8bcba2b3681d90/src/crypto/crypto.cpp#L175
  */
-export function generateKeyDerivation(derivation: Buffer, txPubKey: Buffer, secKeyView: Buffer): void {
-  // Executing the first scalar multiplication without clamping to get the shared secret
-  // clamping which typically filters the scalar to a set range.
-  sodium.crypto_scalarmult_ed25519_noclamp(derivation, secKeyView, txPubKey);
-
+export function generateKeyDerivation(txPubKey: Buffer, secKeyView: Buffer): Buffer {
+  const s: BN = decodeScalar(secKeyView, 'Invalid secret key');
+  const P: curve.edwards.EdwardsPoint = decodePoint(txPubKey, 'Invalid public key');
+  const P2: curve.base.BasePoint = P.mul(s);
   // Multiplying the initial derivation by 8, adhering to specific cryptographic protocol requirements
-  sodium.crypto_scalarmult_ed25519_noclamp(derivation, EIGHT, derivation);
+  const P3: curve.base.BasePoint = P2.mul(new BN('8'));
+  return encodePoint(P3);
 }
 
 /*
@@ -105,23 +103,20 @@ export function generateKeyDerivation(derivation: Buffer, txPubKey: Buffer, secK
  * https://github.com/hyle-team/zano/blob/2817090c8ac7639d6f697d00fc8bcba2b3681d90/src/crypto/crypto.cpp#L207
  */
 export function derivePublicKey(
-  pointG: Buffer,
   derivation: Buffer,
   outIndex: number,
   pubSpendKeyBuf: Buffer,
 ): Buffer {
-  // Deriving scalar `h` from the provided base point (G), derivation buffer and output index
-  const Hs: Buffer = derivationToScalar(pointG, derivation, outIndex); // Hs = Hs(8 * r * V, i)
+  const P1: curve.base.BasePoint = decodePoint(pubSpendKeyBuf, 'Invalid public key');
+  const scalar: Buffer = derivationToScalar(derivation, outIndex);
   /*
    * Scalar multiplication of the base point with the derived scalar to get the intermediary public key
    * Hs(8 * r * V, i)G
   */
-  sodium.crypto_scalarmult_ed25519_base_noclamp(pointG, Hs);
-
+  const P: curve.base.BasePoint = ec.curve.g.mul(decodeInt(scalar));
   // Hs(8 * r * V, i)G + S
-  const P: Buffer = allocateEd25519Point();
-  sodium.crypto_core_ed25519_add(P, pubSpendKeyBuf, pointG);
-  return P;
+  const P2: curve.base.BasePoint = P.add(P1);
+  return encodePoint(P2);
 }
 
 /*
@@ -129,29 +124,31 @@ export function derivePublicKey(
  * https://github.com/hyle-team/zano/blob/2817090c8ac7639d6f697d00fc8bcba2b3681d90/src/crypto/crypto.cpp#L227
  */
 export function deriveSecretKey(
-  pointG: Buffer,
   derivation: Buffer,
   outIndex: number,
   secSpendKeyBuf: Buffer): Buffer {
-  const Hs: Buffer = derivationToScalar(pointG, derivation, outIndex); // Hs = Hs(8 * r * V, i)
+  const Hs: Buffer = derivationToScalar(derivation, outIndex); // Hs = Hs(8 * r * V, i)
+  const hsScalar: BN = decodeScalar(Hs, 'Invalid HS scalar');
+  const sScalar: BN = decodeScalar(secSpendKeyBuf, 'Invalid secret key');
 
-  // x = Hs + s
-  const x: Buffer = allocateEd25519Point();
-  sodium.crypto_core_ed25519_scalar_add(x, Hs, secSpendKeyBuf);
-  return x;
+  const n: BN = ec.curve.n;
+
+  // x = (Hs + s) mod n
+  const x: BN = hsScalar.add(sScalar).mod(n);
+
+  return encodeInt(x);
 }
 
 /*
   * derivation_to_scalar
   * https://github.com/hyle-team/zano/blob/2817090c8ac7639d6f697d00fc8bcba2b3681d90/src/crypto/crypto.cpp#L190
  */
-export function derivationToScalar(scalar: Buffer, derivation: Buffer, outIndex: number): Buffer {
+export function derivationToScalar(derivation: Buffer, outIndex: number): Buffer {
   const data: Buffer = Buffer.concat([
     derivation,
     serializeVarUint(outIndex),
   ]);
-  hashToScalar(scalar, data);
-  return scalar;
+  return hashToScalar(data);
 }
 
 export function fastHash(data: Buffer): Buffer {
@@ -164,27 +161,22 @@ export function fastHash(data: Buffer): Buffer {
  */
 export function hs(str32: Buffer, h: Buffer): Buffer {
   const elements: Buffer[] = [str32, h];
-  const hashScalar: Buffer = allocateEd25519Scalar();
   const data: Buffer = Buffer.concat(elements);
-  hashToScalar(hashScalar, data);
-  return hashScalar;
+  return hashToScalar(data);
 }
 
 /*
  * hash_to_scalar
  * https://github.com/hyle-team/zano/blob/2817090c8ac7639d6f697d00fc8bcba2b3681d90/src/crypto/crypto.cpp#L115
  */
-export function hashToScalar(scalar: Buffer, data: Buffer): void {
-  const hash: Buffer = Buffer.concat([fastHash(data), ZERO]);
-  sodium.crypto_core_ed25519_scalar_reduce(scalar, hash);
+export function hashToScalar(data: Buffer): Buffer {
+  const hash: Buffer = fastHash(data);
+  return reduceScalar32(hash);
 }
 
-export function allocateEd25519Scalar(): Buffer {
-  return Buffer.alloc(EC_SCALAR_SIZE);
-}
-
-export function allocateEd25519Point(): Buffer {
-  return Buffer.alloc(EC_POINT_SIZE);
+export function reduceScalar32(scalar: Buffer): Buffer {
+  const num: BN = decodeInt(scalar);
+  return encodeInt(num.umod(ec.curve.n));
 }
 
 /*
@@ -362,8 +354,7 @@ export function dependentKey(secretSpendKey: Buffer): string {
   if (secretSpendKey.length !== 32) {
     throw new Error('Invalid secret spend key');
   }
-  const secretViewKey: Buffer = allocateEd25519Point();
-  hashToScalar(secretViewKey, secretSpendKey);
+  const secretViewKey: Buffer = hashToScalar(secretSpendKey);
   return secretViewKey.toString('hex');
 }
 

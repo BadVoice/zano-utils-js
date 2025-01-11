@@ -13,7 +13,6 @@ import {
   calculateBlindedAssetId,
   derivePublicKey,
   generateKeyDerivation,
-  allocateEd25519Point,
   calculateConcealingPoint,
   getDerivationToScalar,
   hs,
@@ -62,19 +61,17 @@ function getStealthAddress(txPubKey: string, secViewKey: string, pubSpendKey: st
   // S = public spend key
   const pubSpendKeyBuf: Buffer = Buffer.from(pubSpendKey, 'hex');
 
-  const derivation: Buffer = allocateEd25519Point();
   /*
    * Generates a key derivation by performing scalar multiplication using a transaction public key
    * and a secret view key, then multiplies the result by 8.
   */
-  generateKeyDerivation(derivation, txPubKeyBuf, secViewKeyBuf);
-  const ephemeralPubKey: Buffer = allocateEd25519Point();
+  const derivation: Buffer = generateKeyDerivation(txPubKeyBuf, secViewKeyBuf);
   // P_i = H_s(rV, i)G + S
   /*
    * Derives a public key by using a scalar multiplication of a derivation buffer and the hash of a base point (G),
    * then adds a provided public spend key to the result.
   */
-  const stealth: Buffer = derivePublicKey(ephemeralPubKey, derivation, outIndex, pubSpendKeyBuf);
+  const stealth: Buffer = derivePublicKey(derivation, outIndex, pubSpendKeyBuf);
 
   return stealth.toString('hex');
 }
@@ -99,21 +96,18 @@ function generateKeyImage(txPubKey: string, secViewKey: string, pubSpendKey: str
   const pubSpendKeyBuf: Buffer = Buffer.from(pubSpendKey, 'hex');
   const secSpendKeyBuf: Buffer = Buffer.from(spendSecretKey, 'hex');
 
-  const derivation: Buffer = allocateEd25519Point();
   /*
    * Generates a key derivation by performing scalar multiplication using a transaction public key
    * and a secret view key, then multiplies the result by 8.
   */
-  generateKeyDerivation(derivation, txPubKeyBuf, secViewKeyBuf);
-  const ephemeralPubKey: Buffer = allocateEd25519Point();
-  const ephemeralSecKey: Buffer = allocateEd25519Point();
+  const derivation: Buffer = generateKeyDerivation(txPubKeyBuf, secViewKeyBuf);
   // P_i = H_s(rV, i)G + S
   /*
    * Derives a public key by using a scalar multiplication of a derivation buffer and the hash of a base point (G),
    * then adds a provided public spend key to the result.
   */
-  const secret: Buffer = deriveSecretKey(ephemeralSecKey, derivation, outIndex, secSpendKeyBuf);
-  const stealthAddress: Buffer = derivePublicKey(ephemeralPubKey, derivation, outIndex, pubSpendKeyBuf);
+  const secret: Buffer = deriveSecretKey(derivation, outIndex, secSpendKeyBuf);
+  const stealthAddress: Buffer = derivePublicKey(derivation, outIndex, pubSpendKeyBuf);
 
   const keyImage: Buffer = calculateKeyImage(stealthAddress, secret);
   return keyImage.toString('hex');
@@ -124,8 +118,7 @@ function decryptPaymentId(encryptedPaymentId: string, txPubKey: string, secViewK
   const txPubKeyBuff: Buffer = Buffer.from(txPubKey, 'hex');
   const secViewKeyBuff: Buffer = Buffer.from(secViewKey, 'hex');
 
-  const derivation: Buffer = allocateEd25519Point();
-  generateKeyDerivation(derivation, txPubKeyBuff, secViewKeyBuff);
+  const derivation: Buffer = generateKeyDerivation(txPubKeyBuff, secViewKeyBuff);
   const encrypted: Buffer = chachaCrypt(encryptedPaymentIdBuf, derivation);
   return encrypted.toString('hex');
 }
