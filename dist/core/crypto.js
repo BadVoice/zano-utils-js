@@ -90,13 +90,13 @@ function derivePublicKey(derivation, outIndex, pubSpendKeyBuf) {
     return (0, helpers_1.encodePoint)(P2);
 }
 exports.derivePublicKey = derivePublicKey;
-function deriveSecretKey(derivation, outIndex, secSpendKeyBuf) {
-    const Hs = derivationToScalar(derivation, outIndex);
-    const hsScalar = (0, helpers_1.decodeScalar)(Hs, 'Invalid HS scalar');
-    const sScalar = (0, helpers_1.decodeScalar)(secSpendKeyBuf, 'Invalid secret key');
-    const n = crypto_data_1.ec.curve.n;
-    const x = hsScalar.add(sScalar).mod(n);
-    return (0, helpers_1.encodeInt)(x);
+function deriveSecretKey(derivation, outIndex, sec) {
+    const s = (0, helpers_1.decodeScalar)(sec, 'Invalid secret key');
+    const scalar = derivationToScalar(derivation, outIndex);
+    const key = s
+        .add((0, helpers_1.decodeInt)(scalar))
+        .umod(crypto_data_1.ec.curve.n);
+    return (0, helpers_1.encodeInt)(key);
 }
 exports.deriveSecretKey = deriveSecretKey;
 function derivationToScalar(derivation, outIndex) {
