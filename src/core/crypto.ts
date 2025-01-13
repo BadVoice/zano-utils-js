@@ -71,15 +71,17 @@ export function calculateConcealingPoint(Hs: Buffer, pubViewKeyBuff: Buffer): Bu
   * https://github.com/hyle-team/zano/blob/2817090c8ac7639d6f697d00fc8bcba2b3681d90/src/currency_core/currency_format_utils.cpp#L3289
  */
 export function calculateBlindedAssetId(Hs: Buffer, assetId: Buffer, X: Buffer): Buffer {
+  const assetIdCopy: Buffer = Buffer.from(assetId);
+  const pointXCopy: Buffer = Buffer.from(X);
+
   const hsScalar: BN = decodeScalar(Hs, 'Invalid sсalar');
-  const xP: curve.edwards.EdwardsPoint = decodePoint(X, 'Invalid public key');
-  const sX: curve.base.BasePoint = xP.mul(hsScalar);
+  const xP: curve.edwards.EdwardsPoint = decodePoint(pointXCopy, 'Invalid public key');
+  const sxP: curve.base.BasePoint = xP.mul(hsScalar);
 
   const scalar1div8: BN = decodeScalar(SCALAR_1DIV8, 'Invalid sсalar');
-  const assetIdPoint: curve.edwards.EdwardsPoint = decodePoint(assetId, 'Invalid asset ID');
+  const assetPoint: curve.edwards.EdwardsPoint = decodePoint(assetIdCopy, 'Invalid public key');
 
-  const pointT: curve.base.BasePoint = assetIdPoint.add(sX);
-
+  const pointT: curve.base.BasePoint = sxP.add(assetPoint);
   const blindedAssetIdPoint: curve.base.BasePoint = pointT.mul(scalar1div8);
 
   return encodePoint(blindedAssetIdPoint);

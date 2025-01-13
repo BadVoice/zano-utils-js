@@ -1,6 +1,6 @@
 {
   "name": "@badvoice/zano-utils-js",
-  "version": "0.3.7",
+  "version": "0.3.8",
   "repository": "git@github.com:BadVoice/Zano-utils-js.git",
   "author": "BadVoice <https://t.me/GermanSmurov>",
   "main": "dist/index.js",
@@ -39,7 +39,6 @@
     "@types/jest": "^29.5.14",
     "@types/keccak": "^3.0.5",
     "@types/node": "^18",
-    "@types/sodium-native": "^2.3.5",
     "@typescript-eslint/eslint-plugin": "^4.28.2",
     "@typescript-eslint/parser": "^4.28.2",
     "eslint": "^7.32.0",
