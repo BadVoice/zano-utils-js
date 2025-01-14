@@ -67,8 +67,8 @@ export function calculateConcealingPoint(Hs: Buffer, pubViewKeyBuff: Buffer): Bu
 }
 
 /*
-  * crypto::point_t asset_id = blinded_asset_id - asset_id_blinding_mask * crypto::c_point_X; // H = T - s * X
-  * https://github.com/hyle-team/zano/blob/2817090c8ac7639d6f697d00fc8bcba2b3681d90/src/currency_core/currency_format_utils.cpp#L3289
+  * out.blinded_asset_id = (crypto::c_scalar_1div8 * blinded_asset_id).to_public_key(); // T = 1/8 * (H_asset + s * X)
+  * https://github.com/hyle-team/zano/blob/2817090c8ac7639d6f697d00fc8bcba2b3681d90/src/currency_core/currency_format_utils.cpp#L1278
  */
 export function calculateBlindedAssetId(Hs: Buffer, assetId: Buffer, X: Buffer): Buffer {
   const assetIdCopy: Buffer = Buffer.from(assetId);
@@ -86,6 +86,9 @@ export function calculateBlindedAssetId(Hs: Buffer, assetId: Buffer, X: Buffer):
 
   return encodePoint(blindedAssetIdPoint);
 }
+
+// todo: crypto::point_t asset_id = blinded_asset_id - asset_id_blinding_mask * crypto::c_point_X; // H = T - s * X
+// https://github.com/hyle-team/zano/blob/2817090c8ac7639d6f697d00fc8bcba2b3681d90/src/currency_core/currency_format_utils.cpp#L3289
 
 /*
   * generate_key_derivation
