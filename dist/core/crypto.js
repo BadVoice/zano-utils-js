@@ -64,12 +64,14 @@ function calculateConcealingPoint(Hs, pubViewKeyBuff) {
 }
 exports.calculateConcealingPoint = calculateConcealingPoint;
 function calculateBlindedAssetId(Hs, assetId, X) {
+    const assetIdCopy = Buffer.from(assetId);
+    const pointXCopy = Buffer.from(X);
     const hsScalar = (0, helpers_1.decodeScalar)(Hs, 'Invalid sсalar');
-    const xP = (0, helpers_1.decodePoint)(X, 'Invalid public key');
-    const sX = xP.mul(hsScalar);
+    const xP = (0, helpers_1.decodePoint)(pointXCopy, 'Invalid public key');
+    const sxP = xP.mul(hsScalar);
     const scalar1div8 = (0, helpers_1.decodeScalar)(exports.SCALAR_1DIV8, 'Invalid sсalar');
-    const assetIdPoint = (0, helpers_1.decodePoint)(assetId, 'Invalid asset ID');
-    const pointT = assetIdPoint.add(sX);
+    const assetPoint = (0, helpers_1.decodePoint)(assetIdCopy, 'Invalid public key');
+    const pointT = sxP.add(assetPoint);
     const blindedAssetIdPoint = pointT.mul(scalar1div8);
     return (0, helpers_1.encodePoint)(blindedAssetIdPoint);
 }
