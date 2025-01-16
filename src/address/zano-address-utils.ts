@@ -252,6 +252,7 @@ function calculateChecksum(buffer: Buffer): string {
 
 export {
   getIntegratedAddress,
+  createIntegratedAddress,
   encodeAddress,
   getMasterAddress,
   splitIntegratedAddress,
