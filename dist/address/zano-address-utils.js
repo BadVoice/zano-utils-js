@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getKeysFromAddress = exports.splitIntegratedAddress = exports.getMasterAddress = exports.encodeAddress = exports.getIntegratedAddress = void 0;
+exports.getKeysFromAddress = exports.splitIntegratedAddress = exports.getMasterAddress = exports.encodeAddress = exports.createIntegratedAddress = exports.getIntegratedAddress = void 0;
 const crypto_1 = __importDefault(require("crypto"));
 const constants_1 = require("./constants");
 const base58_1 = require("../core/base58");
@@ -31,6 +31,7 @@ function createIntegratedAddress(address, paymentId) {
         throw new Error(`Error creating integrated address: ${error.message}`);
     }
 }
+exports.createIntegratedAddress = createIntegratedAddress;
 function formatIntegratedAddress(addressDecoded, paymentIdBuffer) {
     const { tag, flag, viewPublicKey, spendPublicKey, } = addressDecoded;
     const integratedAddressBuffer = Buffer.concat([
