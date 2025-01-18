@@ -106,8 +106,34 @@ async function generateAccountKeys(): Promise<AccountKeys> {
   };
 }
 
+async function getAccountBySeedKey(secretSpendKey: string): Promise<AccountKeys> {
+  if (secretSpendKey.length !== 64 || !/^([0-9a-fA-F]{2})+$/) {
+    throw new Error('Invalid secret spend key');
+  }
+
+  const secretSpendKeyBuf: Buffer = Buffer.from(secretSpendKey, 'hex');
+
+  const secretViewKey: string = dependentKey(secretSpendKeyBuf);
+  const publicSpendKey: string = secretKeyToPublicKey(secretSpendKeyBuf);
+
+  if (!secretViewKey || !publicSpendKey) {
+    throw new Error('Error generate seed keys');
+  }
+
+  const secretViewKeyBuf: Buffer = Buffer.from(secretViewKey, 'hex');
+  const publicViewKey: string = secretKeyToPublicKey(secretViewKeyBuf);
+
+  return {
+    secretSpendKey,
+    publicSpendKey,
+    secretViewKey,
+    publicViewKey,
+  };
+}
+
 export {
   generateAccount,
   accountValidate,
   generateAccountKeys,
+  getAccountBySeedKey,
 };

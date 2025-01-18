@@ -1,4 +1,5 @@
-import { ZanoAddressUtils } from '../src';
+import { getKeysFromAddress } from '../src';
+import { encodeAddress } from '../src';
 import { ZarcanumAddressKeys } from '../src/address/types';
 import { base58Decode, base58Encode } from '../src/core/base58';
 
@@ -65,7 +66,6 @@ function runTests() {
 }
 
 function runTestEncodeAddress(address: string, viewPubKey: string, spendPubKey: string): void {
-  const zanoAddressUtils: ZanoAddressUtils = new ZanoAddressUtils();
   const addressBufferHex: string = dataToEncodeFn(bufferToHex(base58Decode(address)));
   testEncode(
     'ZxD5aoLDPTdcaRx4uCpyW4XiLfEXejepAVz8cSY2fwHNEiJNu6NmpBBDLGTJzCsUvn3acCVDVDPMV8yQXdPooAp338Se7AxeH',
@@ -84,7 +84,7 @@ function runTestEncodeAddress(address: string, viewPubKey: string, spendPubKey: 
     throw new Error('PubSpendKey not matched.');
   }
 
-  const encodedAddress: string = zanoAddressUtils.encodeAddress(197, 1, spendPubKey, viewPubKey);
+  const encodedAddress: string = encodeAddress(197, 1, spendPubKey, viewPubKey);
 
   if(encodedAddress !== address) {
     throw new Error(`Encoded address not matched. Received ${encodedAddress}, Expected: ${address}`);
@@ -92,8 +92,7 @@ function runTestEncodeAddress(address: string, viewPubKey: string, spendPubKey: 
 }
 
 function runTestGetZarcanumKeys(address: string, viewPubKey: string, spendPubKey: string): void {
-  const zanoAddressUtils: ZanoAddressUtils = new ZanoAddressUtils();
-  const keysFromAddress: ZarcanumAddressKeys = zanoAddressUtils.getKeysFromAddress(address);
+  const keysFromAddress: ZarcanumAddressKeys = getKeysFromAddress(address);
 
   if(keysFromAddress.spendPublicKey !== spendPubKey) {
     throw new Error('spendPubKey not matched.');

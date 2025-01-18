@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.generateAccountKeys = exports.accountValidate = exports.generateAccount = exports.parseObjectInJson = exports.decryptPaymentId = exports.generateKeyImage = exports.getNativeBlindedAsset = exports.getStealthAddress = exports.decodeAmount = exports.getConcealingPoint = exports.getKeysFromAddress = exports.splitIntegratedAddress = exports.getMasterAddress = exports.encodeAddress = exports.getIntegratedAddress = void 0;
+exports.getAccountBySeedKey = exports.generateAccountKeys = exports.accountValidate = exports.generateAccount = exports.parseObjectInJson = exports.decryptPaymentId = exports.generateKeyImage = exports.getNativeBlindedAsset = exports.getStealthAddress = exports.decodeAmount = exports.getConcealingPoint = exports.getKeysFromAddress = exports.splitIntegratedAddress = exports.getMasterAddress = exports.encodeAddress = exports.getIntegratedAddress = void 0;
 var zano_address_utils_1 = require("./address/zano-address-utils");
 Object.defineProperty(exports, "getIntegratedAddress", { enumerable: true, get: function () { return zano_address_utils_1.getIntegratedAddress; } });
 Object.defineProperty(exports, "encodeAddress", { enumerable: true, get: function () { return zano_address_utils_1.encodeAddress; } });
@@ -19,4 +19,5 @@ var zano_account_utils_1 = require("./account/zano-account-utils");
 Object.defineProperty(exports, "generateAccount", { enumerable: true, get: function () { return zano_account_utils_1.generateAccount; } });
 Object.defineProperty(exports, "accountValidate", { enumerable: true, get: function () { return zano_account_utils_1.accountValidate; } });
 Object.defineProperty(exports, "generateAccountKeys", { enumerable: true, get: function () { return zano_account_utils_1.generateAccountKeys; } });
+Object.defineProperty(exports, "getAccountBySeedKey", { enumerable: true, get: function () { return zano_account_utils_1.getAccountBySeedKey; } });
 //# sourceMappingURL=index.js.map
