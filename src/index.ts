@@ -18,4 +18,5 @@ export {
   generateAccount,
   accountValidate,
   generateAccountKeys,
+  getAccountBySeedKey,
 } from './account/zano-account-utils';
