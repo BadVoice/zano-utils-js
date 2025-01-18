@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.generateAccountKeys = exports.accountValidate = exports.generateAccount = void 0;
+exports.getAccountBySeedKey = exports.generateAccountKeys = exports.accountValidate = exports.generateAccount = void 0;
 const constants_1 = require("./constants");
 const constants_2 = require("../address/constants");
 const zano_address_utils_1 = require("../address/zano-address-utils");
@@ -69,4 +69,24 @@ async function generateAccountKeys() {
     };
 }
 exports.generateAccountKeys = generateAccountKeys;
+async function getAccountBySeedKey(secretSpendKey) {
+    if (secretSpendKey.length !== 64 || !/^([0-9a-fA-F]{2})+$/) {
+        throw new Error('Invalid secret spend key');
+    }
+    const secretSpendKeyBuf = Buffer.from(secretSpendKey, 'hex');
+    const secretViewKey = (0, crypto_1.dependentKey)(secretSpendKeyBuf);
+    const publicSpendKey = (0, crypto_1.secretKeyToPublicKey)(secretSpendKeyBuf);
+    if (!secretViewKey || !publicSpendKey) {
+        throw new Error('Error generate seed keys');
+    }
+    const secretViewKeyBuf = Buffer.from(secretViewKey, 'hex');
+    const publicViewKey = (0, crypto_1.secretKeyToPublicKey)(secretViewKeyBuf);
+    return {
+        secretSpendKey,
+        publicSpendKey,
+        secretViewKey,
+        publicViewKey,
+    };
+}
+exports.getAccountBySeedKey = getAccountBySeedKey;
 //# sourceMappingURL=zano-account-utils.js.map
